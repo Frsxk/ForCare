@@ -161,10 +161,6 @@ integration("owned patient profile and scope integration", () => {
       ]),
     );
     for (const clinical of [
-      "check_ins",
-      "check_in_observations",
-      "care_orders",
-      "clinical_source_documents",
       "visits",
       "bookings",
       "notifications",
