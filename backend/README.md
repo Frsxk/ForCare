@@ -18,7 +18,7 @@ bun test
 - `GET /health/live`: returns `200` without contacting PostgreSQL or AI.
 - `GET /health/ready`: runs `SELECT 1`, then returns `200`. It returns `503` if the database probe fails, without exposing connection details.
 
-These checks do not test AI access or application schemas. Patient-data and AI HTTP routes have not been added.
+The `/api/v1` routes cover patient registration and login, session/logout, own-profile reads and contact edits, own access scope, the nurse directory, assigned-patient lists/summaries/detail, and a capability snapshot. Every API response uses the envelope and `X-Request-Id`; mutations require CSRF and domain edits require `Idempotency-Key`. Clinical, booking, analysis, notification and push routes are absent.
 
 ## Environment
 
@@ -32,10 +32,32 @@ These checks do not test AI access or application schemas. Patient-data and AI H
 - `AI_API_KEY`, `AI_MODEL`: required when AI is enabled.
 - `AI_BASE_URL`: optional HTTPS Chat Completions endpoint. HTTP is accepted only for loopback development endpoints. Credentials, query strings and fragments are not allowed in the URL.
 - `AI_TIMEOUT_MS`: integer from `1` to `120000`, default `30000`. Provider retries are disabled.
+- `AUTH_ALLOWED_ORIGINS`: required comma-separated exact origins. Production origins must be HTTPS; there is no wildcard or guessed default.
+- `AUTH_SESSION_SECRET`: required at least 32 characters for session IP hashing and cursor signing.
+- `AUTH_NURSE_EMAIL_DOMAIN`: optional exact nurse email domain. Leave unset to block nurse provisioning and nurse login; this deployment's approved synthetic value is `nurse.invalid`.
+- `AUTH_LOCAL_HTTP_TEST`: `true` only for loopback HTTP tests; it is rejected when `HOST` is not loopback.
 
 `BACKEND_PORT` controls the Compose host port, not the container listener. Compose disables `LANGSMITH_TRACING` and `LANGCHAIN_TRACING_V2`.
 
+Rate limits are per API process. Cursors use the configured secret, expire after 15 minutes and are bound to the account, session, scope and filter. Run one API process until a shared limiter exists. Limits are 5 login attempts per IP/email pair per 15 minutes, an additional 30 login requests per IP per 15 minutes, 3 registrations per IP per hour, and 120 authenticated requests per account per minute. A full limiter rejects new buckets rather than evicting active limits. Client addresses come from the direct socket, not `X-Forwarded-For`; a same-host proxy therefore shares its IP limit across clients until a trusted-proxy policy is configured.
+
+API JSON bodies are limited to 32 KiB. The application returns a structured 413 for that limit. Bun also has a 64 KiB transport backstop, which may return a bare 413 before routing; clients must inspect the HTTP status before parsing JSON. `AUTH_LOCAL_HTTP_TEST` allows loopback HTTP origins only and never relaxes the Secure cookie. Native HTTP test clients must manage that cookie explicitly; browser HTTPS/proxy integration remains separate.
+
 For native commands, supply a private environment or use Bun's `--env-file` option. An optional blank setting in a native environment file is not necessarily equivalent to an unset variable; the root Compose file supplies its own defaults.
+
+## Database migrations and integration tests
+
+Run `bun run migrate` with the database environment configured before using the account API. It applies `0001_identity` and `0002_patients_operations` transactionally and verifies checksum history on repeat runs. It never seeds demo users. Do not edit an applied migration file.
+
+`bun run test:integration` runs migration, authentication and patient-scope checks. It requires `FORCARE_TEST_DATABASE_URL` pointing to a dedicated loopback database with an explicit non-5432 port and a name ending in `_test`. The test role must be allowed to create/drop the suite's temporary databases on that isolated server. Do not use a production or shared application database. The command fails if opt-in is missing; ordinary `bun test` skips live database suites. The LangGraph checkpoint suite has its own opt-in below.
+
+See [API.md](API.md) for implemented routes, request examples and error handling.
+
+## Identity operations
+
+`bun run seed:demo -- --confirm synthetic-demo-nurses --output /absolute/private/path/demo-nurses.json --operator <name> --approval-ref <reference>` provisions only the three approved synthetic nurses when `AUTH_NURSE_EMAIL_DOMAIN=nurse.invalid`. It writes generated passwords to a new mode-0600 file outside the repository, requires all three identities to be free, and changes nothing on collision. It never prints passwords and never runs at startup.
+
+`bun run patient:assign -- record --patient-id <uuid> --record-number RM-2026-001 --expected-version <n> --operator <name> --approval-ref <reference>` assigns a staff-reviewed display record number to an already-owned patient profile. `primary` uses `--nurse-id <uuid>` instead and atomically updates the primary nurse, primary access grant and revoked prior grant. Neither command accepts NIK, auto-matches RM, merges accounts or exposes an HTTP admin route.
 
 ## LangChain check
 

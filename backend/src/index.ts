@@ -1,22 +1,40 @@
-import { SQL } from "bun";
 import { createApp } from "./app";
-import { readServerConfig } from "./config";
 import { readAiConfig } from "./ai/config";
+import { createAuthService } from "./auth/service";
+import { readAuthConfig, readServerConfig } from "./config";
+import { createRateLimiters } from "./http/rate-limit";
+import { MAX_TRANSPORT_BODY_BYTES } from "./http/request";
+import { createPatientService } from "./patients/service";
+import { createDatabase } from "./storage/database";
 
 try {
   const config = readServerConfig(process.env);
+  const authConfig = readAuthConfig(process.env, { hostname: config.hostname });
   readAiConfig(process.env);
-  const database = new SQL({
-    ...config.database,
+  const database = createDatabase(config.database, {
     max: 5,
     connectionTimeout: 3,
     idleTimeout: 20,
   });
-  const app = createApp(async () => {
-    const query = database`SELECT 1`;
-    const timer = setTimeout(() => query.cancel(), 2000);
-    try { await query; } finally { clearTimeout(timer); }
-  }).listen({ hostname: config.hostname, port: config.port });
+  const rateLimiters = createRateLimiters();
+  const auth = createAuthService({ sql: database, config: authConfig });
+  const patients = createPatientService({ sql: database, config: authConfig });
+  const app = createApp(
+    async () => {
+      const query = database`SELECT 1`;
+      const timer = setTimeout(() => query.cancel(), 2000);
+      try {
+        await query;
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    { auth, patients, config: authConfig, rateLimiters },
+  ).listen({
+    hostname: config.hostname,
+    port: config.port,
+    maxRequestBodySize: MAX_TRANSPORT_BODY_BYTES,
+  });
 
   console.log(`ForCare backend listening on ${config.hostname}:${app.server?.port}`);
   const shutdown = async () => {

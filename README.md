@@ -2,7 +2,7 @@
 
 ForCare is a web application for hospitals and homecare providers to coordinate patient check-ins, nurse visits and care records.
 
-The repository currently has a Next.js starter, a Bun/Elysia backend, PostgreSQL and a LangChain connectivity check. Patient records, booking, authentication and check-in analysis are still to be implemented. Nurses and doctors will review health-related AI output before it is used in care.
+The backend implements patient registration, cookie sessions, owned contact profiles, a synthetic nurse directory and primary-nurse patient scope in PostgreSQL. The Next.js frontend is being developed separately; API integration is pending. Booking, check-ins, clinical records, clinical scoring, AI analysis, notifications and browser push are not implemented yet. Health-related AI output will require human review.
 
 ## Run the backend and database
 
@@ -10,14 +10,21 @@ You need Docker Engine and Docker Compose v2 or later.
 
 ```sh
 cp .env.example .env
-# Set POSTGRES_PASSWORD in .env to a unique password.
-docker compose up --build -d --wait
+# Set POSTGRES_PASSWORD and AUTH_SESSION_SECRET to unique secrets in .env.
+# Set AUTH_ALLOWED_ORIGINS to the exact HTTPS frontend origin.
+# Set AUTH_NURSE_EMAIL_DOMAIN=nurse.invalid for the synthetic nurses.
+docker compose build backend
+docker compose up -d --wait db
+docker compose run --rm --no-deps backend bun run migrate
+docker compose up -d --wait backend
 curl --fail http://127.0.0.1:3001/health/ready
 ```
 
 The backend listens on `127.0.0.1:3001`. Set `BACKEND_PORT` in `.env` if that port is occupied. PostgreSQL is available to containers at `db:5432`; it has no published host port.
 
-Keep `.env` out of Git. Optional blank entries use the defaults in `compose.yaml`. To validate the configuration without printing credentials, run `docker compose config --quiet`.
+Keep `.env` out of Git. Optional blank entries use the defaults in `compose.yaml`; the database password, allowed origins and session secret are required. `AUTH_SESSION_SECRET` must contain at least 32 characters. To validate without printing credentials, run `docker compose config --quiet`.
+
+Run migrations explicitly after building the backend and before using account routes. The runner verifies previously applied checksums and does not seed users or erase data. Browser authentication requires an HTTPS frontend/proxy with an exact allowed origin. The loopback backend health URL above is not a browser-auth deployment. See the [implemented API reference](backend/API.md) and [backend setup](backend/README.md) for native testing and controlled identity operations.
 
 ```sh
 docker compose ps
@@ -89,4 +96,4 @@ flowchart LR
 - [TypeScript](https://github.com/microsoft/TypeScript): Apache-2.0.
 - [PostgreSQL](https://www.postgresql.org/about/licence/): PostgreSQL License.
 
-OpenAI Codex (`gpt-6.1-sol`) assisted with backend setup, Docker configuration and tests. Application AI currently consists of the optional LangChain connectivity check through `@langchain/openai`; patient-analysis workflows and the production model have not been selected.
+OpenAI Codex (`gpt-6.1-sol`) and DeepSeek (`DeepSeek-V4.1-Flash-1017`) assisted with backend implementation, reviews, Docker configuration and tests. Application AI currently consists of the optional LangChain connectivity check through `@langchain/openai`; patient-analysis workflows and the production model have not been selected.
