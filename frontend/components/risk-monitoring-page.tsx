@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, UsersRound, TriangleAlert, CircleAlert, ShieldCheck, Search, Check } from "lucide-react";
 import { patientDirectory, riskLabels, type PatientRisk } from "@/lib/patient-directory-data";
 import { NurseHeader } from "@/components/nurse-header";
@@ -17,10 +18,26 @@ const riskOptions: { value: PatientRisk; label: string }[] = [
 ];
 
 export function RiskMonitoringPage() {
+  return <Suspense fallback={<main className="dashboard-main" role="status">Memuat pemantauan risiko...</main>}><RiskMonitoringContent /></Suspense>;
+}
+
+function RiskMonitoringContent() {
   const { riskReviews, approvePatientRisk, notify } = useNurseData();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState(monitoringPatients[0].patient.id);
+  const [selectedId, setSelectedId] = useState(() => {
+    const requestedId = searchParams.get("patientId");
+    return monitoringPatients.some(({ patient }) => patient.id === requestedId)
+      ? requestedId!
+      : monitoringPatients[0].patient.id;
+  });
   const [choices, setChoices] = useState<Record<string, PatientRisk>>({});
+  useEffect(() => {
+    const requestedId = searchParams.get("patientId");
+    if (monitoringPatients.some(({ patient }) => patient.id === requestedId)) {
+      setSelectedId(requestedId!);
+    }
+  }, [searchParams]);
   const selected = monitoringPatients.find((item) => item.patient.id === selectedId)!;
   const selectedRisk = riskReviews[selectedId] ?? selected.risk;
   const choice = choices[selectedId] ?? selectedRisk;

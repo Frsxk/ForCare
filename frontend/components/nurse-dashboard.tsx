@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import {
   CalendarCheck,
   CalendarDays,
@@ -13,18 +12,13 @@ import {
   dashboardDate,
   nurse,
   patients,
-  type Patient,
 } from "@/lib/dashboard-data";
 import { riskLabels } from "@/lib/patient-directory-data";
 import { formatVisitDate, visitDemoDate } from "@/lib/visit-data";
 import { Avatar, PatientIdentity } from "@/components/patient-identity";
-import { PatientReview } from "@/components/patient-review";
 import { NurseHeader } from "@/components/nurse-header";
 import { useNurseData } from "@/components/nurse-data-provider";
-import { Modal } from "@/components/ui/modal";
-type Panel = { kind: "patient"; patient: Patient } | null;
 export function NurseDashboard() {
-  const [panel, setPanel] = useState<Panel>(null);
   const { requests, reviewedPatients, visits, riskReviews } = useNurseData();
   const todayVisits = visits
     .filter((visit) => visit.date === visitDemoDate)
@@ -42,9 +36,6 @@ export function NurseDashboard() {
   const pendingRequestCount = requests.filter(
     (request) => request.status === "pending",
   ).length;
-  function openPanel(next: Exclude<Panel, null>) {
-    setPanel(next);
-  }
   const stats = [
     {
       label: "Total pasien",
@@ -156,18 +147,13 @@ export function NurseDashboard() {
                       <td className="reason-cell">{item.reason}</td>
                       <td className="source-cell">{item.source}</td>
                       <td className="action-cell">
-                        <button
+                        <Link
                           className={`button button-primary button-small${reviewed ? " button-reviewed" : ""}`}
-                          onClick={() =>
-                            openPanel({
-                              kind: "patient",
-                              patient: item.patient,
-                            })
-                          }
+                          href={`/pemantauan-risiko?patientId=${encodeURIComponent(item.patient.id)}`}
                           aria-label={`${reviewed ? "Lihat hasil tinjauan" : "Tinjau pasien"} ${item.patient.name}`}
                         >
                           {reviewed ? "Ditinjau" : "Tinjau"}
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   );
@@ -272,14 +258,6 @@ export function NurseDashboard() {
           </section>
         </div>
       </main>
-      {panel?.kind === "patient" && (
-        <Modal title="Tinjau pasien" onClose={() => setPanel(null)}>
-          <PatientReview
-            patient={panel.patient}
-            onClose={() => setPanel(null)}
-          />
-        </Modal>
-      )}
     </>
   );
 }
