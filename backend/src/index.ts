@@ -1,6 +1,9 @@
 import { createApp } from "./app";
 import { readAiConfig } from "./ai/config";
 import { createAuthService } from "./auth/service";
+import { createAssessmentService } from "./assessments/service";
+import { createCheckInService } from "./checkins/service";
+import { createClinicalService } from "./clinical/service";
 import { readAuthConfig, readServerConfig } from "./config";
 import { createRateLimiters } from "./http/rate-limit";
 import { MAX_TRANSPORT_BODY_BYTES } from "./http/request";
@@ -19,6 +22,9 @@ try {
   const rateLimiters = createRateLimiters();
   const auth = createAuthService({ sql: database, config: authConfig });
   const patients = createPatientService({ sql: database, config: authConfig });
+  const clinical = createClinicalService({ sql: database, config: authConfig });
+  const checkins = createCheckInService({ sql: database, config: authConfig });
+  const assessments = createAssessmentService({ sql: database, config: authConfig });
   const app = createApp(
     async () => {
       const query = database`SELECT 1`;
@@ -29,7 +35,7 @@ try {
         clearTimeout(timer);
       }
     },
-    { auth, patients, config: authConfig, rateLimiters },
+    { auth, patients, clinical, checkins, assessments, config: authConfig, rateLimiters },
   ).listen({
     hostname: config.hostname,
     port: config.port,

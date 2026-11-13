@@ -14,6 +14,8 @@ import {
 import { isUuid } from "../http/request";
 import { isoTimestamp } from "../http/time";
 import { scopesForRole, type AuthContext } from "../auth/policy";
+import { readLatestSubmittedCheckIn } from "../checkins/repository";
+import { countActiveOrderHeads } from "../clinical/repository";
 import type { NurseProfilePatch, PatientProfilePatch } from "./schemas";
 import {
   listAssignedPatients,
@@ -91,12 +93,37 @@ function requireNurse(auth: AuthContext): string {
   return auth.staffId;
 }
 
-function patientListRow(row: { id: string; full_name: string; record_number: string | null }) {
+type PatientListSource = {
+  id: string;
+  full_name: string;
+  record_number: string | null;
+  latest_check_in_id?: string | null;
+  latest_check_in_condition?: string | null;
+  latest_check_in_local_date?: string | null;
+  latest_check_in_submitted_at?: Date | string | null;
+};
+
+/**
+ * Projection shared by the assigned-patient list and summary. Only the most
+ * recent submitted check-in is exposed; drafts never appear here.
+ */
+function patientListRow(row: PatientListSource) {
   return {
     id: row.id,
     displayName: row.full_name,
     recordNumber: row.record_number,
-    latestCheckIn: null,
+    latestCheckIn:
+      row.latest_check_in_id == null || row.latest_check_in_condition == null
+        ? null
+        : {
+            id: row.latest_check_in_id,
+            condition: row.latest_check_in_condition,
+            localDate: row.latest_check_in_local_date ?? null,
+            submittedAt:
+              row.latest_check_in_submitted_at == null
+                ? null
+                : isoTimestamp(row.latest_check_in_submitted_at),
+          },
     nextVisit: null,
   };
 }
@@ -313,9 +340,18 @@ export function createPatientService(options: { sql: SQL; config: AuthConfig }):
     if (!isUuid(patientId)) throw new AppError("NOT_FOUND", "Patient not found", 404);
     const row = await readAssignedPatient(sql, staffId, patientId);
     if (!row) throw new AppError("NOT_FOUND", "Patient not found", 404);
+    const latest = await readLatestSubmittedCheckIn(sql, row.id);
     return {
       ...patientListRow({ id: row.id, full_name: row.full_name, record_number: row.record_number }),
-      activeOrderCount: 0,
+      latestCheckIn: latest
+        ? {
+            id: latest.id,
+            condition: latest.condition,
+            localDate: latest.local_date,
+            submittedAt: isoTimestamp(latest.submitted_at),
+          }
+        : null,
+      activeOrderCount: await countActiveOrderHeads(sql, row.id),
     };
   }
 
@@ -345,7 +381,7 @@ export function createPatientService(options: { sql: SQL; config: AuthConfig }):
       primaryNurse: row.primary_nurse_id
         ? { id: row.primary_nurse_id, displayName: row.primary_nurse_display_name ?? "" }
         : null,
-      availableSections: ["profile"],
+      availableSections: ["profile", "care_guide"],
     };
   }
 

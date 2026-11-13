@@ -1,8 +1,11 @@
 import type { SQL } from "bun";
 import { createApp } from "../../src/app";
+import { createAssessmentService } from "../../src/assessments/service";
 import { createAuthService } from "../../src/auth/service";
+import { createCheckInService } from "../../src/checkins/service";
 import type { AuthConfig } from "../../src/config";
 import { createRateLimiters, type RateLimiters } from "../../src/http/rate-limit";
+import { createClinicalService } from "../../src/clinical/service";
 import { createPatientService } from "../../src/patients/service";
 import { testAuthConfig } from "./disposable-database";
 
@@ -16,14 +19,20 @@ export function createTestApp(
   const rateLimiters = createRateLimiters(options.rateLimiters);
   const auth = createAuthService({ sql, config });
   const patients = createPatientService({ sql, config });
+  const clinical = createClinicalService({ sql, config });
+  const checkins = createCheckInService({ sql, config });
+  const assessments = createAssessmentService({ sql, config });
   const app = createApp(async () => {}, {
     auth,
     patients,
+    clinical,
+    checkins,
+    assessments,
     config,
     rateLimiters,
     getClientIp: () => options.ip ?? "127.0.0.1",
   });
-  return { app, auth, patients, config, rateLimiters };
+  return { app, auth, patients, clinical, checkins, assessments, config, rateLimiters };
 }
 
 export function jsonRequest(

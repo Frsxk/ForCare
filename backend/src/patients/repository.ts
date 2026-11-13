@@ -167,11 +167,32 @@ export async function listAssignedPatients(
     afterName: string | null;
     afterId: string | null;
   },
-): Promise<Array<{ id: string; full_name: string; record_number: string | null }>> {
+): Promise<
+  Array<{
+    id: string;
+    full_name: string;
+    record_number: string | null;
+    latest_check_in_id: string | null;
+    latest_check_in_condition: string | null;
+    latest_check_in_local_date: string | null;
+    latest_check_in_submitted_at: Date | string | null;
+  }>
+> {
   return (await sql`
-    SELECT p.id, p.full_name, p.record_number
+    SELECT p.id, p.full_name, p.record_number,
+           ci.id AS latest_check_in_id,
+           ci.condition AS latest_check_in_condition,
+           to_char(ci.local_date, 'YYYY-MM-DD') AS latest_check_in_local_date,
+           ci.submitted_at AS latest_check_in_submitted_at
     FROM public.patients p
     JOIN public.patient_access_grants g ON g.patient_id = p.id
+    LEFT JOIN LATERAL (
+      SELECT c.id, c.condition, c.local_date, c.submitted_at
+      FROM public.check_ins c
+      WHERE c.patient_id = p.id AND c.status = 'submitted'
+      ORDER BY c.submitted_at DESC, c.id DESC
+      LIMIT 1
+    ) ci ON true
     WHERE g.staff_id = ${input.staffId}
       AND g.basis = 'primary'
       AND g.revoked_at IS NULL
@@ -187,7 +208,15 @@ export async function listAssignedPatients(
       )
     ORDER BY lower(p.full_name), p.id
     LIMIT ${input.limit + 1}
-  `) as unknown as Array<{ id: string; full_name: string; record_number: string | null }>;
+  `) as unknown as Array<{
+    id: string;
+    full_name: string;
+    record_number: string | null;
+    latest_check_in_id: string | null;
+    latest_check_in_condition: string | null;
+    latest_check_in_local_date: string | null;
+    latest_check_in_submitted_at: Date | string | null;
+  }>;
 }
 
 export async function readAssignedPatient(

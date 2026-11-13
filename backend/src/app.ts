@@ -2,6 +2,12 @@ import { Elysia } from "elysia";
 import type { AuthConfig } from "./config";
 import { authRoutes, type ClientIpResolver } from "./auth/routes";
 import type { AuthService } from "./auth/service";
+import { assessmentRoutes } from "./assessments/routes";
+import type { AssessmentService } from "./assessments/service";
+import { checkInRoutes } from "./checkins/routes";
+import type { CheckInService } from "./checkins/service";
+import { clinicalRoutes } from "./clinical/routes";
+import type { ClinicalService } from "./clinical/service";
 import { AppError, isApiPath, toErrorResponse } from "./http/errors";
 import { createRateLimiters, type RateLimiters } from "./http/rate-limit";
 import { assertAllowedOrigin } from "./http/request";
@@ -11,6 +17,9 @@ import type { PatientService } from "./patients/service";
 export type AppServices = {
   auth?: AuthService;
   patients?: PatientService;
+  clinical?: ClinicalService;
+  checkins?: CheckInService;
+  assessments?: AssessmentService;
   config?: AuthConfig;
   rateLimiters?: RateLimiters;
   getClientIp?: ClientIpResolver;
@@ -38,8 +47,8 @@ export function createApp(checkDatabase: () => Promise<void>, services: AppServi
       }
     });
 
+  const rateLimiters = services.rateLimiters ?? createRateLimiters();
   if (services.auth && services.patients && services.config) {
-    const rateLimiters = services.rateLimiters ?? createRateLimiters();
     app.use(
       authRoutes({
         auth: services.auth,
@@ -52,6 +61,39 @@ export function createApp(checkDatabase: () => Promise<void>, services: AppServi
       patientRoutes({
         auth: services.auth,
         patients: services.patients,
+        config: services.config,
+        rateLimiters,
+        getClientIp: services.getClientIp,
+      }),
+    );
+  }
+  if (services.auth && services.clinical && services.config) {
+    app.use(
+      clinicalRoutes({
+        auth: services.auth,
+        clinical: services.clinical,
+        config: services.config,
+        rateLimiters,
+        getClientIp: services.getClientIp,
+      }),
+    );
+  }
+  if (services.auth && services.checkins && services.config) {
+    app.use(
+      checkInRoutes({
+        auth: services.auth,
+        checkins: services.checkins,
+        config: services.config,
+        rateLimiters,
+        getClientIp: services.getClientIp,
+      }),
+    );
+  }
+  if (services.auth && services.assessments && services.config) {
+    app.use(
+      assessmentRoutes({
+        auth: services.auth,
+        assessments: services.assessments,
         config: services.config,
         rateLimiters,
         getClientIp: services.getClientIp,

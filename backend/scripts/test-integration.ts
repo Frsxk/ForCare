@@ -25,6 +25,10 @@ const child = Bun.spawn(
     "test/migrations.integration.test.ts",
     "test/auth.integration.test.ts",
     "test/patients.integration.test.ts",
+    "test/clinical-records.integration.test.ts",
+    "test/checkins.integration.test.ts",
+    "test/monitoring-contract.integration.test.ts",
+    "test/assessments.integration.test.ts",
   ],
   {
     cwd: new URL("..", import.meta.url).pathname,

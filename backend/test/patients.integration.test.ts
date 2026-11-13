@@ -160,12 +160,16 @@ integration("owned patient profile and scope integration", () => {
         "outbox_events",
       ]),
     );
-    for (const clinical of [
+    // The disposable database applies every approved migration, so later
+    // approved slices legitimately exist here (T08 monitoring included).
+    // These future patient-operation tables still do not.
+    expect(tables).toContain("check_in_observations");
+    for (const laterSlice of [
       "visits",
       "bookings",
       "notifications",
     ]) {
-      expect(tables).not.toContain(clinical);
+      expect(tables).not.toContain(laterSlice);
     }
 
     const columns = (await db.sql`
@@ -654,7 +658,7 @@ integration("owned patient profile and scope integration", () => {
       access: { scope: "assigned" },
       profile: { birthDate: "1990-03-12", gender: "female" },
       primaryNurse: { id: nurseOne.staffId, displayName: "Nora One" },
-      availableSections: ["profile"],
+      availableSections: ["profile", "care_guide"],
     });
     for (const forbidden of ["email", "phone", "nik", "insurance", "internalNote"]) {
       expect(detailBody.data).not.toHaveProperty(forbidden);
