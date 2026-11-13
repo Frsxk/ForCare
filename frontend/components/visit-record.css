@@ -1,0 +1,453 @@
+.visit-record-main {
+  min-height: calc(100svh - 70px);
+  padding-top: 34px;
+  padding-bottom: 76px;
+}
+.visit-record-heading > p {
+  color: var(--secondary);
+  font-size: 15px;
+  line-height: 24px;
+}
+.record-completed-label {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 0 9px;
+  border-radius: 20px;
+  background: #c8eee6;
+  color: #176a50;
+  font-size: 12px;
+  font-weight: 700;
+}
+.medical-record-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 2.14fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+}
+.medical-record-fields {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  gap: 20px;
+  border: 0;
+}
+.medical-record-sidebar {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+.medical-record-card {
+  min-width: 0;
+}
+.medical-record-card .section-header {
+  min-height: 56px;
+  padding: 14px 20px;
+  border-radius: 12px 12px 0 0;
+}
+.record-card-header {
+  background: #7bb3a7;
+  color: #fff;
+}
+.medical-record-card .section-header h2 {
+  font-size: 17px;
+  line-height: 26px;
+}
+.medical-field {
+  min-width: 0;
+}
+.medical-field > label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+.medical-control,
+.medical-unit-input input,
+.record-blood-pressure input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--foreground);
+  font: 14px/22px var(--font-body);
+}
+.medical-control:focus-visible,
+.medical-unit-input input:focus-visible,
+.record-blood-pressure input:focus-visible {
+  outline: 3px solid #167dba;
+  outline-offset: 3px;
+}
+.medical-control:disabled,
+.medical-unit-input input:disabled,
+.record-blood-pressure input:disabled {
+  background: #f5faf8;
+  color: #315a4e;
+  -webkit-text-fill-color: #315a4e;
+  opacity: 1;
+}
+.medical-readonly {
+  background: #d9f4ed;
+}
+.medical-unit-input {
+  position: relative;
+}
+.medical-unit-input input {
+  padding-right: 48px;
+}
+.medical-unit-input > span {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #167d67;
+  font-size: 13px;
+  pointer-events: none;
+}
+.record-responsibility-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+.record-responsibility-body .medical-unit-input > span {
+  color: #55718b;
+  font-size: 12px;
+}
+.record-time-error {
+  grid-column: 1 / -1;
+  margin-top: -8px;
+  color: #b33245;
+  font-size: 13px;
+}
+.record-examination-body {
+  display: grid;
+  gap: 20px;
+  padding: 10px 20px 20px;
+}
+.record-vitals-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.25fr;
+  gap: 24px;
+}
+.record-vitals-grid .medical-unit-input {
+  max-width: 114px;
+}
+.record-blood-pressure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+}
+.record-blood-pressure input {
+  flex-shrink: 0;
+  width: 60px;
+  padding: 10px 13px;
+}
+.record-blood-pressure > span {
+  font-weight: 700;
+}
+.medical-select {
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10' fill='none'%3E%3Cpath d='m2 2 5 5 5-5' stroke='%23176b59' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+}
+textarea.medical-control {
+  resize: vertical;
+  max-height: 360px;
+}
+.medical-control.record-observations {
+  height: 96px;
+  min-height: 96px;
+}
+.record-procedures-body {
+  padding: 20px;
+}
+.medical-control.record-procedures {
+  height: 130px;
+  min-height: 100px;
+}
+.record-log-card .section-header {
+  min-height: 68px;
+  padding: 16px 18px 16px 20px;
+  gap: 14px;
+}
+.record-log-card .section-header .button {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.record-log-table-wrap {
+  position: relative;
+  overflow-x: auto;
+}
+.record-log-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+}
+.log-col-name {
+  width: 36.3%;
+}
+.log-col-kind {
+  width: 20.6%;
+}
+.log-col-quantity {
+  width: 15.1%;
+}
+.log-col-unit {
+  width: 17.8%;
+}
+.log-col-action {
+  width: 10.2%;
+}
+.record-log-table thead {
+  background: #d3e8e2;
+  color: #118970;
+}
+.record-log-table th {
+  height: 44px;
+  padding: 10px 16px;
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.record-log-table td {
+  height: 65px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.record-log-table tr:last-child td {
+  border-bottom: 0;
+}
+.record-log-table .medical-control {
+  height: 36px;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.record-log-table .medical-select {
+  padding-right: 28px;
+  background-size: 12px;
+}
+.record-remove-item {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: #476383;
+}
+.record-remove-item:hover {
+  background: #fff0f2;
+  color: #b73244;
+  border-color: #f0bec7;
+}
+.record-no-supplies {
+  padding: 20px;
+  color: var(--secondary);
+  font-size: 14px;
+}
+.record-no-supplies > p {
+  margin-bottom: 12px;
+}
+.record-no-supplies label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.record-no-supplies input {
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+.medical-record-sidebar .section-header h2 {
+  font-size: 16px;
+  white-space: nowrap;
+}
+.record-progress {
+  margin-left: auto;
+  color: #e1f5ef;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.record-completeness-list {
+  display: grid;
+  gap: 14px;
+  min-height: 188px;
+  padding: 26px 20px;
+}
+.record-completeness-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 22px;
+}
+.record-check-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #187e55;
+  color: #fff;
+}
+.record-incomplete-icon {
+  color: #95b7aa;
+  flex-shrink: 0;
+}
+.record-reference-body {
+  padding: 20px;
+}
+.record-outline-button {
+  width: 100%;
+  border-color: var(--primary);
+  background: #fff;
+  color: var(--foreground);
+  font-size: 14px;
+}
+.record-outline-button:hover {
+  background: #eaf8f3;
+}
+.record-reference-body > .button {
+  margin-top: 16px;
+  padding: 10px;
+}
+.record-save-actions {
+  display: grid;
+  gap: 20px;
+}
+.record-save-actions > .button {
+  width: 100%;
+  font-size: 14px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+.record-save-note {
+  color: #147957;
+  font-size: 13px;
+}
+.record-validation-error {
+  padding: 12px;
+  border-radius: 9px;
+  background: #fff0f1;
+  color: #b33245;
+  font-size: 13px;
+}
+.record-finished-note {
+  padding: 18px;
+  border: 1px solid #b7e2ce;
+  border-radius: 12px;
+  background: #e7f6ee;
+  color: #17684c;
+}
+.record-finished-note p {
+  margin-top: 5px;
+  font-size: 14px;
+}
+.record-finished-note .text-button {
+  margin-top: 10px;
+}
+@media (max-width: 1100px) {
+  .medical-record-layout {
+    gap: 24px;
+  }
+  .record-vitals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .record-vitals-grid .medical-unit-input {
+    max-width: none;
+  }
+  .record-log-table {
+    min-width: 700px;
+  }
+  .medical-record-sidebar .section-header {
+    gap: 8px;
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+  .medical-record-sidebar .section-header h2 {
+    font-size: 15px;
+  }
+}
+@media (max-width: 950px) {
+  .medical-record-layout {
+    grid-template-columns: 1fr;
+  }
+  .medical-record-sidebar .section-header {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+  .medical-record-sidebar .section-header h2 {
+    font-size: 17px;
+  }
+  .record-completeness-list {
+    min-height: 0;
+  }
+}
+@media (max-width: 580px) {
+  .visit-record-main {
+    padding-top: 24px;
+    padding-bottom: 40px;
+  }
+  .visit-record-heading > p {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .record-responsibility-body {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px;
+  }
+  .record-vitals-grid {
+    grid-template-columns: 1fr;
+  }
+  .record-examination-body {
+    padding: 16px 18px 18px;
+  }
+  .record-procedures-body {
+    padding: 18px;
+  }
+  .medical-record-card .section-header {
+    padding: 14px 18px;
+  }
+  .medical-record-card .section-header h2 {
+    font-size: 16px;
+  }
+  .record-log-card .section-header {
+    padding: 14px 16px;
+  }
+  .record-log-card .section-header h2 {
+    font-size: 15px;
+  }
+  .record-log-card .section-header .button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .record-reference-body {
+    padding: 18px;
+  }
+  .record-completeness-list {
+    padding: 22px 18px;
+  }
+}
