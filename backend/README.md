@@ -18,7 +18,7 @@ bun test
 - `GET /health/live`: returns `200` without contacting PostgreSQL or AI.
 - `GET /health/ready`: runs `SELECT 1`, then returns `200`. It returns `503` if the database probe fails, without exposing connection details.
 
-The `/api/v1` routes cover patient registration and login, session/logout, own-profile reads and contact edits, own access scope, the nurse directory, assigned-patient lists/summaries/detail, and a capability snapshot. Every API response uses the envelope and `X-Request-Id`; mutations require CSRF and domain edits require `Idempotency-Key`. Clinical, booking, analysis, notification and push routes are absent.
+The `/api/v1` routes cover accounts/sessions, owned profiles, nurse directory and patient scope, versioned medical records, patient-bound clinical sources and care instructions, check-in drafts/submissions, observation history/confirmation, and assessment availability metadata. Authenticated mutations require CSRF; domain writes also require `Idempotency-Key` and version checks where specified. Patients see approved care projections, never raw medical snapshots or internal notes. Numerical scoring is gated; booking, analysis, notifications and push are absent. [API.md](API.md) lists the exact payloads and access rules.
 
 ## Environment
 
@@ -47,9 +47,9 @@ For native commands, supply a private environment or use Bun's `--env-file` opti
 
 ## Database migrations and integration tests
 
-Run `bun run migrate` with the database environment configured before using the account API. It applies `0001_identity` and `0002_patients_operations` transactionally and verifies checksum history on repeat runs. It never seeds demo users. Do not edit an applied migration file.
+Run `bun run migrate` with the database environment configured before using the account API. It applies each pending migration from `0001_identity` through `0005_assessments` transactionally and verifies checksum history on repeat runs. It never seeds demo users. Do not edit an applied migration file.
 
-`bun run test:integration` runs migration, authentication and patient-scope checks. It requires `FORCARE_TEST_DATABASE_URL` pointing to a dedicated loopback database with an explicit non-5432 port and a name ending in `_test`. The test role must be allowed to create/drop the suite's temporary databases on that isolated server. Do not use a production or shared application database. The command fails if opt-in is missing; ordinary `bun test` skips live database suites. The LangGraph checkpoint suite has its own opt-in below.
+`bun run test:integration` runs migration, authentication, patient-scope, clinical-record, check-in, schema-contract and assessment-availability checks. It requires `FORCARE_TEST_DATABASE_URL` pointing to a dedicated loopback database with an explicit non-5432 port and a name ending in `_test`. The test role must be allowed to create/drop the suite's temporary databases on that isolated server. Do not use a production or shared application database. The command fails if opt-in is missing; ordinary `bun test` skips live database suites. The LangGraph checkpoint suite has its own opt-in below.
 
 See [API.md](API.md) for implemented routes, request examples and error handling.
 

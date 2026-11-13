@@ -2,7 +2,7 @@
 
 ForCare is a web application for hospitals and homecare providers to coordinate patient check-ins, nurse visits and care records.
 
-The backend implements patient registration, cookie sessions, owned contact profiles, a synthetic nurse directory and primary-nurse patient scope in PostgreSQL. The Next.js frontend is being developed separately; API integration is pending. Booking, check-ins, clinical records, clinical scoring, AI analysis, notifications and browser push are not implemented yet. Health-related AI output will require human review.
+The backend implements patient accounts and sessions, primary-nurse patient scope, versioned medical records, explicitly approved patient care instructions, and patient check-in drafts/submissions in PostgreSQL. Recorded observations and nurse confirmations remain separate. Numerical scoring is unavailable until its clinical policy is approved. The Next.js frontend is being developed separately; API integration is pending. Booking, AI analysis, notifications and browser push are not implemented yet.
 
 ## Run the backend and database
 
