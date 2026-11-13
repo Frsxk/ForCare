@@ -42,3 +42,11 @@ For native commands, supply a private environment or use Bun's `--env-file` opti
 `bun run ai:smoke` runs a fixed, non-medical connectivity check. It exits nonzero when disabled, misconfigured or unsuccessful. It does not accept patient input, grant tools, write records or run clinical analysis.
 
 The tests use synthetic responses from a local HTTP server. An actual model connection requires your own provider credential.
+
+## Checkpoint integration check
+
+`bun run test:checkpoint` runs the LangGraph interrupt/restart spike against a real PostgreSQL server. It needs `FORCARE_CHECKPOINT_TEST_DATABASE_URL`, a dedicated loopback database whose name starts with `forcare_checkpoint_test`. The port must be explicit and must not be 5432. There is no `DATABASE_URL` or `.env` fallback, and the script exits nonzero when the variable is missing or unsafe. Plain `bun test` skips the integration suite.
+
+The fixture stores synthetic draft ids and publication markers only. It proves that a paused graph can be resumed by a separate process and that duplicate resumes keep one publication row. It performs structural binding checks between the pause and the decision, not user authentication or domain authorization.
+
+A failed task retains its first resume payload in the tested LangGraph version. The tests characterize explicit re-entry with a fresh nonce; they do not implement the application's review-recovery policy.
