@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, UsersRound, TriangleAlert, CircleAlert, ShieldCheck, Search, Check } from "lucide-react";
@@ -32,12 +32,6 @@ function RiskMonitoringContent() {
       : monitoringPatients[0].patient.id;
   });
   const [choices, setChoices] = useState<Record<string, PatientRisk>>({});
-  useEffect(() => {
-    const requestedId = searchParams.get("patientId");
-    if (monitoringPatients.some(({ patient }) => patient.id === requestedId)) {
-      setSelectedId(requestedId!);
-    }
-  }, [searchParams]);
   const selected = monitoringPatients.find((item) => item.patient.id === selectedId)!;
   const selectedRisk = riskReviews[selectedId] ?? selected.risk;
   const choice = choices[selectedId] ?? selectedRisk;

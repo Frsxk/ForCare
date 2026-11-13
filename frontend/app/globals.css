@@ -60,6 +60,12 @@ a {
   color: inherit;
   text-decoration: none;
 }
+.patient-account-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
 button,
 a {
   touch-action: manipulation;
@@ -140,6 +146,8 @@ svg {
 }
 .brand img {
   display: block;
+  width: 140px;
+  height: auto;
 }
 .brand-care {
   color: var(--primary);

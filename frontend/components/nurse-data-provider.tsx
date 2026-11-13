@@ -13,6 +13,7 @@ import { nurse } from "@/lib/dashboard-data";
 import { initialNotificationPreferences, initialNotifications, type NurseNotification, type NotificationPreferences, type NotificationSetting } from "@/lib/notification-data";
 import {
   homecareRequests,
+  patients,
   type HomecareRequest,
   type RequestStatus,
 } from "@/lib/dashboard-data";
@@ -43,6 +44,7 @@ type NurseData = {
   saveVisitDraft: (visitId: string, record: VisitMedicalRecord) => boolean;
   saveMedicalRecord: (visitId: string, record: VisitMedicalRecord) => boolean;
   requests: HomecareRequest[];
+  submitHomecareRequest: (schedule: string, doctor: string) => string | null;
   decideRequest: (
     id: string,
     status: Exclude<RequestStatus, "pending">,
@@ -98,6 +100,14 @@ export function NurseDataProvider({ children }: { children: ReactNode }) {
           : request,
       ),
     );
+  }
+
+  function submitHomecareRequest(schedule: string, doctor: string) {
+    const patient = patients[0];
+    const nextNumber = Math.max(...requests.map((request) => Number(request.id.replace("HC-", ""))), 0) + 1;
+    const id = `HC-${String(nextNumber).padStart(4, "0")}`;
+    setRequests((previous) => [...previous, { id, status: "pending", patient, schedule, doctor }]);
+    return id;
   }
 
   function saveMedicalRecord(visitId: string, record: VisitMedicalRecord) {
@@ -185,6 +195,7 @@ export function NurseDataProvider({ children }: { children: ReactNode }) {
         saveVisitDraft,
         saveMedicalRecord,
         requests,
+        submitHomecareRequest,
         decideRequest,
         reviewedPatients,
         reviewPatient: (id) =>
