@@ -4,6 +4,8 @@
   "scripts": {
     "test": "bun test",
     "test:checkpoint": "bun run scripts/checkpoint-test.ts",
+    "test:integration": "bun run scripts/test-integration.ts",
+    "migrate": "bun run scripts/migrate.ts",
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",

@@ -11,6 +11,7 @@ COPY --from=dependencies --chown=bun:bun /app/node_modules ./node_modules
 COPY --chown=bun:bun package.json ./package.json
 COPY --chown=bun:bun src ./src
 COPY --chown=bun:bun scripts ./scripts
+COPY --chown=bun:bun migrations ./migrations
 USER bun
 EXPOSE 3000
 CMD ["bun", "run", "src/index.ts"]
