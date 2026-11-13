@@ -1,0 +1,425 @@
+.patient-profile-app {
+  min-height: 100vh;
+  background: #f2fbf9;
+  color: #104c3f;
+}
+.patient-profile-main {
+  max-width: 1128px;
+  margin: 36px auto 70px;
+  padding: 0 18px;
+}
+.patient-profile-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 27px;
+}
+.patient-profile-title h1 {
+  font: 800 30px "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -1px;
+}
+.profile-edit-button,
+.profile-save {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 19px;
+  border: 1px solid #35c3a5;
+  border-radius: 10px;
+  background: #35c3a5;
+  color: white;
+  font: 700 14px/1 "Lato", sans-serif;
+  cursor: pointer;
+}
+.profile-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  text-align: center;
+  vertical-align: middle;
+}
+.patient-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 27px;
+  align-items: start;
+}
+.patient-profile-primary,
+.patient-profile-side {
+  display: grid;
+  align-content: start;
+  gap: 22px;
+}
+.profile-identity-card,
+.profile-info-card,
+.assigned-nurse-card,
+.profile-shortcuts {
+  overflow: hidden;
+  border: 1px solid #35c3a5;
+  border-radius: 13px;
+  background: white;
+}
+.profile-identity-head {
+  min-height: 104px;
+  padding: 19px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #d8e8e5;
+}
+.patient-profile-avatar {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #c5eee5;
+  color: #23b99b;
+  font-size: 20px;
+  font-weight: 700;
+}
+.profile-identity-head h2 {
+  font: 700 20px "Plus Jakarta Sans", sans-serif;
+}
+.profile-identity-head p {
+  margin-top: 3px;
+  color: #168e78;
+}
+.active-patient-badge {
+  margin-left: auto;
+  padding: 5px 11px;
+  border-radius: 20px;
+  background: #e2f6f1;
+  color: #168257;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.profile-identity-body {
+  padding: 19px 20px 21px;
+}
+.profile-identity-body h3 {
+  margin-bottom: 15px;
+  font: 700 15px "Plus Jakarta Sans", sans-serif;
+}
+.profile-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px 20px;
+}
+.profile-fact {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+.profile-fact small {
+  color: #168e78;
+  font-size: 12px;
+}
+.profile-fact strong {
+  font-size: 14px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.profile-info-card,
+.assigned-nurse-card {
+  border: 0;
+  box-shadow: 0 3px 5px #173f332e;
+}
+.profile-info-card > header,
+.assigned-nurse-card > header {
+  min-height: 56px;
+  padding: 16px 20px;
+  background: #64a999;
+  color: white;
+  font: 700 15px "Plus Jakarta Sans", sans-serif;
+}
+.profile-info-card > div {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.assigned-nurse-card > div {
+  min-height: 78px;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.nurse-profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e0f6f1;
+  color: #168e78;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.assigned-nurse-card p {
+  display: grid;
+  gap: 2px;
+}
+.assigned-nurse-card strong {
+  font-size: 14px;
+}
+.assigned-nurse-card small {
+  color: #617a92;
+  font-size: 12px;
+}
+.profile-shortcuts {
+  padding: 0 20px;
+}
+.profile-shortcuts > a {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-bottom: 1px solid #d9f0ea;
+  background: white;
+  color: inherit;
+  text-align: left;
+}
+.profile-shortcuts > a:last-child {
+  border-bottom: 0;
+}
+.profile-shortcuts > a > span:nth-child(2) {
+  flex: 1;
+  display: grid;
+  gap: 1px;
+}
+.profile-shortcuts strong {
+  font-size: 14px;
+}
+.profile-shortcuts small {
+  color: #617a92;
+  font-size: 13px;
+}
+.profile-shortcuts > svg {
+  color: #168e78;
+}
+.profile-shortcut-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: #def5f1;
+  color: #1476bd;
+  display: grid;
+  place-items: center;
+}
+.profile-signout {
+  height: 44px;
+  border-radius: 9px;
+  background: #db565d;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.patient-profile-app .patient-header {
+  height: 70px;
+  border-bottom: 1px solid #e7f1ef;
+  background: white;
+}
+.patient-profile-app .patient-header-inner {
+  height: 100%;
+  max-width: 1160px;
+  margin: auto;
+  padding: 0 18px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+.patient-profile-app .patient-brand img {
+  width: 140px;
+  height: auto;
+  display: block;
+}
+.patient-profile-app .patient-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 4.4vw, 58px);
+}
+.patient-profile-app .patient-nav a {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.patient-profile-app .patient-account {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.patient-profile-app .patient-bell {
+  width: 42px;
+  height: 42px;
+  margin-right: 14px;
+  border: 1px solid #b8e9df;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: white;
+  color: #31546c;
+  cursor: pointer;
+}
+.patient-profile-app .patient-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0f6f1;
+  color: #25b99b;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.patient-profile-app .patient-account-text {
+  min-width: 120px;
+  display: grid;
+  line-height: 1.35;
+}
+.patient-profile-app .patient-account-text strong {
+  font-size: 14px;
+}
+.patient-profile-app .patient-account-text small {
+  color: #168e78;
+}
+.patient-profile-app .patient-menu-button {
+  display: none;
+  background: transparent;
+  color: #104c3f;
+}
+@media (max-width: 900px) {
+  .patient-profile-app .patient-header-inner {
+    grid-template-columns: auto 1fr auto;
+  }
+  .patient-profile-app .patient-nav {
+    justify-self: center;
+    gap: 18px;
+  }
+  .patient-profile-app .patient-account-text {
+    display: none;
+  }
+  .patient-profile-app .patient-bell {
+    margin-right: 0;
+  }
+  .patient-profile-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(260px, .9fr);
+    gap: 18px;
+  }
+  .profile-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .patient-profile-app .patient-header-inner {
+    padding: 0 16px;
+    grid-template-columns: 1fr auto;
+  }
+  .patient-profile-app .patient-brand img {
+    width: 126px;
+  }
+  .patient-profile-app .patient-nav {
+    display: none;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    padding: 14px 20px;
+    background: white;
+    box-shadow: 0 6px 12px #1232;
+    align-items: stretch;
+    gap: 0;
+  }
+  .patient-profile-app .patient-nav.is-open {
+    display: grid;
+  }
+  .patient-profile-app .patient-nav a {
+    padding: 12px 4px;
+    border-bottom: 1px solid #e3f1ed;
+  }
+  .patient-profile-app .patient-account {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 7px;
+  }
+  .patient-profile-app .patient-avatar {
+    width: 34px;
+    height: 34px;
+  }
+  .patient-profile-app .patient-bell {
+    width: 38px;
+    height: 38px;
+  }
+  .patient-profile-app .patient-menu-button {
+    display: grid;
+    place-items: center;
+    margin-left: 6px;
+  }
+  .patient-profile-main {
+    margin: 25px auto 50px;
+    padding: 0 16px;
+  }
+  .patient-profile-title h1 {
+    font-size: 25px;
+  }
+  .patient-profile-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .patient-profile-side {
+    grid-row: 1;
+  }
+  .profile-identity-head {
+    gap: 13px;
+    padding: 16px;
+  }
+  .patient-profile-avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .profile-identity-head h2 {
+    font-size: 17px;
+  }
+  .profile-identity-head p {
+    font-size: 13px;
+  }
+  .profile-identity-body {
+    padding: 16px;
+  }
+  .profile-info-card > div {
+    padding: 17px;
+  }
+  .patient-profile-primary,
+  .patient-profile-side {
+    gap: 16px;
+  }
+}
+@media (max-width: 420px) {
+  .profile-identity-head {
+    flex-wrap: wrap;
+  }
+  .active-patient-badge {
+    margin-left: auto;
+  }
+  .profile-facts {
+    gap: 14px 10px;
+  }
+  .profile-fact strong {
+    font-size: 13px;
+  }
+  .profile-info-card > div {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .patient-profile-title {
+    align-items: center;
+  }
+}

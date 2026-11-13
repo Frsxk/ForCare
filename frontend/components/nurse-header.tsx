@@ -26,16 +26,7 @@ export function NurseHeader({
               setMenuOpen(false);
             }}
           >
-            <Image
-              src="/forcare-mark.svg"
-              alt=""
-              width={40}
-              height={40}
-              priority
-            />
-            <span>
-              For<span className="brand-care">Care</span>
-            </span>
+            <Image src="/forcare-brand.png" alt="ForCare" width={215} height={68} priority />
           </Link>
 
           <nav
