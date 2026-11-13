@@ -1,0 +1,54 @@
+.risk-monitoring-main { min-height: calc(100svh - 70px); padding-top: 36px; }
+.risk-back-link { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: #136d5b; margin-bottom: 28px; }
+.risk-back-link:hover { text-decoration: underline; }
+.risk-monitoring-heading { margin-bottom: 26px; }
+.risk-monitoring-heading p { color: #526987; }
+.risk-monitoring-stats { margin-bottom: 28px; }
+.risk-monitoring-layout { display: grid; grid-template-columns: minmax(0, 2.14fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.risk-monitoring-card { background: white; border-radius: 13px; box-shadow: 0 4px 3px #0003; overflow: hidden; min-width: 0; }
+.risk-search-header { min-height: 76px; padding: 16px 20px; background: var(--teal-header); border-radius: 12px; }
+.risk-monitoring-search { width: 267px; max-width: 100%; height: 44px; margin: 0; color: #526987; background: white; border-radius: 9px; }
+.risk-monitoring-search input::placeholder { color: #69809e; }
+.risk-table-scroll { overflow-x: auto; }
+.risk-monitoring-table { width: 100%; min-width: 710px; table-layout: fixed; border-collapse: collapse; color: #1c3e65; }
+.risk-col-patient { width: 25%; }.risk-col-level { width: 22.5%; }.risk-col-factor { width: 36%; }.risk-col-updated { width: 16.5%; }
+.risk-monitoring-table th { background: #e2f6f1; color: #526987; font-size: 12px; text-transform: uppercase; text-align: left; padding: 12px 16px; height: 43px; white-space: nowrap; }
+.risk-monitoring-table td { padding: 12px 16px; height: 74px; border-bottom: 1px solid #e2eaf2; font-size: 14px; }
+.risk-monitoring-table tr:last-child td { border-bottom: 0; }
+.risk-monitoring-table .is-selected td { background: #c2eee4; }
+.risk-monitoring-table small { display: block; font-size: 12px; color: #607594; margin-top: 2px; }
+.risk-monitoring-table .is-selected small, .risk-monitoring-table .is-selected .secondary-text { color: #247564; }
+.risk-monitoring-table .secondary-text { color: #607594; }
+.risk-patient-select { background: transparent; color: inherit; padding: 0; text-align: left; width: 100%; }
+.risk-patient-select .patient-identity { white-space: nowrap; }
+.risk-patient-select .patient-identity strong { font-size: 14px; }
+.risk-updated { color: #526987; white-space: nowrap; font-size: 12px !important; }
+.risk-monitoring-card .risk-low { background: #e3f5ec; color: #09714e; }
+.risk-monitoring-sidebar { display: grid; gap: 20px; min-width: 0; }
+.risk-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 12px 10px 12px 20px; background: var(--teal-header); color: white; border-radius: 12px; }
+.risk-card-heading h2 { font-size: 16px; line-height: 24px; font-weight: 700; }
+.risk-card-heading .risk-badge { flex-shrink: 0; }
+.risk-review-body { padding: 20px 20px 30px; }
+.risk-review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; color: #526987; margin-bottom: 16px; }
+.risk-draft-badge { padding: 3px 11px; border-radius: 20px; color: #965700; background: #fcf3e1; font-size: 12px; font-weight: 700; }
+.risk-choice-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.risk-choice-fieldset legend { color: #12866f; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.risk-choice-fieldset legend > span { color: #607594; font-weight: 400; }
+.risk-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.risk-choice { position: relative; cursor: pointer; }
+.risk-choice input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.risk-choice > span { display: block; border: 1px solid #208b75; border-radius: 22px; padding: 7px 15px; font-size: 14px; color: #16846e; }
+.risk-choice.is-selected > span { background: #208b75; color: white; }
+.risk-choice input:focus-visible + span { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.risk-review-actions { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 18px; }
+.risk-review-actions .button { min-height: 44px; font-size: 14px; padding: 9px 8px; white-space: nowrap; }
+.risk-approve-button { background: #208b75; color: white; }
+.risk-approve-button:hover:not(:disabled) { background: #146e5b; }
+.risk-record-button { background: white; color: #16846e; border: 1px solid #208b75; }
+.risk-record-button:hover { background: #e2f6f1; }
+.risk-basis-heading { min-height: 56px; background: #7cb5a8; }
+.risk-basis-list { list-style: none; margin: 0; padding: 28px 20px; display: grid; gap: 14px; }
+.risk-basis-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.risk-basis-list li > span { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; color: white; background: #148256; }
+@media (max-width: 1050px) { .risk-monitoring-layout { grid-template-columns: minmax(0, 1fr); } .risk-monitoring-sidebar { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; } }
+@media (max-width: 580px) { .risk-monitoring-sidebar { grid-template-columns: minmax(0,1fr); } .risk-back-link { margin-bottom: 24px; } .risk-review-actions { gap: 8px; } }

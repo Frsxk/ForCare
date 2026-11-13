@@ -1,0 +1,32 @@
+.patient-reference-details {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+.patient-reference-details dt {
+  margin-bottom: 2px;
+  color: #008a71;
+  font-size: 13px;
+  line-height: 20px;
+}
+.patient-reference-details dd {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.medical-history-title {
+  margin: 24px 0 12px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.medical-history-empty {
+  color: var(--secondary);
+  font-size: 14px;
+  padding: 12px 0;
+}
+.modal-content > .patient-reference-details {
+  margin-top: 22px;
+}
+

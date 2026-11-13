@@ -1,0 +1,45 @@
+.nurse-profile-main { min-height: calc(100svh - 70px); }
+.nurse-profile-title { font-family: "Plus Jakarta Sans", var(--font-body); font-size: 32px; font-weight: 800; line-height: 40px; letter-spacing: -1px; margin: 0 0 25px; }
+.nurse-profile-layout { display: grid; grid-template-columns: minmax(0, 1.97fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.nurse-profile-primary { display: grid; gap: 24px; min-width: 0; }
+.nurse-profile-identity { background: white; border: 1px solid var(--primary); border-radius: 13px; overflow: hidden; }
+.nurse-profile-identity-heading { display: flex; align-items: center; gap: 20px; min-height: 105px; padding: 20px; border-bottom: 1px solid #dfe8f1; }
+.nurse-profile-avatar { width: 64px; height: 64px; display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: #bfeee4; color: #147866; font-weight: 700; font-size: 21px; }
+.nurse-profile-identity-heading h2 { font-size: 21px; line-height: 28px; font-weight: 700; }
+.nurse-profile-identity-heading p { color: var(--secondary); font-size: 14px; margin-top: 2px; }
+.nurse-profile-active { background: #e3f5ec; color: #09714e; border-radius: 20px; padding: 3px 13px; font-size: 12px; font-weight: 700; margin-left: auto; }
+.nurse-profile-details { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px 24px; margin: 0; padding: 18px 20px 20px; }
+.nurse-profile-details dt { color: #58708f; font-size: 12px; line-height: 20px; }
+.nurse-profile-details > div:first-child dt { color: #13735e; }
+.nurse-profile-details dd { margin: 2px 0 0; font-size: 14px; line-height: 22px; overflow-wrap: anywhere; }
+.nurse-profile-settings-heading { min-height: 57px; padding: 15px 20px; background: #7ab3a7; color: white; border-radius: 12px; }
+.nurse-profile-settings-heading h2 { font-size: 16px; line-height: 26px; font-weight: 700; }
+.nurse-profile-settings-body { display: grid; gap: 10px; padding: 20px; }
+.nurse-notification-option { position: relative; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 11px; min-height: 65px; padding: 10px 14px; color: #1c3e65; cursor: pointer; }
+.nurse-notification-option.is-checked { border-color: var(--primary); background: #e9f8f4; }
+.nurse-notification-option input { position: absolute; opacity: 0; width: 18px; height: 18px; margin: 0; }
+.nurse-notification-check { width: 18px; height: 18px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid #92cdbf; background: white; border-radius: 5px; color: white; }
+.is-checked .nurse-notification-check { background: var(--primary); border-color: var(--primary); }
+.nurse-notification-option:has(input:focus-visible) { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.nurse-notification-option strong { display: block; font-size: 14px; line-height: 21px; font-weight: 700; }
+.nurse-notification-option small { display: block; font-size: 12px; line-height: 18px; color: #526987; }
+.nurse-profile-shortcuts { padding: 0 20px; background: white; border: 1px solid var(--primary); border-radius: 13px; }
+.nurse-profile-shortcut { display: flex; align-items: center; gap: 14px; min-height: 63px; width: 100%; padding: 8px 0; background: transparent; color: var(--foreground); text-align: left; }
+.nurse-profile-shortcut + .nurse-profile-shortcut { border-top: 1px solid var(--border); }
+.nurse-profile-shortcut > svg:last-child { margin-left: auto; color: var(--secondary); flex-shrink: 0; }
+.nurse-profile-shortcut strong { display: block; font-size: 14px; font-weight: 700; }
+.nurse-profile-shortcut small { display: block; font-size: 13px; }
+.nurse-profile-shortcut-icon { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; background: #d7f3ed; color: #126bc2; border-radius: 11px; }
+.nurse-profile-shortcut:hover { color: var(--secondary); }
+.nurse-profile-signout { width: 100%; min-height: 44px; margin-top: 16px; background: #df5962; color: white; font-size: 14px; }
+.nurse-profile-signout:hover { background: #c94a54; }
+.profile-button.is-active .avatar-nurse { background: var(--primary); color: white; }
+@media (max-width: 900px) { .nurse-profile-layout { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 580px) {
+  .nurse-profile-title { font-size: 28px; }
+  .nurse-profile-identity-heading { gap: 12px; padding: 16px; flex-wrap: wrap; }
+  .nurse-profile-avatar { width: 52px; height: 52px; }
+  .nurse-profile-identity-heading h2 { font-size: 18px; }
+  .nurse-profile-details { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; padding-inline: 16px; }
+  .nurse-profile-settings-body { padding: 16px; }
+}
