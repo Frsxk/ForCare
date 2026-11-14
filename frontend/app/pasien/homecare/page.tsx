@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { PatientHomecarePage } from "@/components/patient-homecare-page";
+import { PatientLivePage } from "@/components/patient-live-pages";
 
-export const metadata: Metadata = { title: "Homecare | ForCare" };
-export default function Page() { return <PatientHomecarePage />; }
+export default function Page() { return <PatientLivePage section="homecare" />; }

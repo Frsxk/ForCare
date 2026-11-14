@@ -1,11 +1,3 @@
-import type { Metadata } from "next";
-import { NurseProfilePage } from "@/components/nurse-profile-page";
+import { LiveNurseProfile } from "@/components/nurse-workspace-pages";
 
-export const metadata: Metadata = {
-  title: "Profil Perawat | ForCare",
-  description: "Profil perawat dan pengaturan notifikasi ForCare.",
-};
-
-export default function Page() {
-  return <NurseProfilePage />;
-}
+export default function Page() { return <LiveNurseProfile />; }

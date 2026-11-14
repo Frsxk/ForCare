@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { HomecareBookingFlow } from "@/components/homecare-booking-flow";
+import { PatientLivePage } from "@/components/patient-live-pages";
 
-export const metadata: Metadata = { title: "Pesan Homecare | ForCare" };
-export default function Page() { return <HomecareBookingFlow />; }
+export default function Page() { return <PatientLivePage section="booking" />; }

@@ -3,14 +3,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
-import { nurse } from "@/lib/dashboard-data";
+import { useNurseProfile } from "@/components/nurse-workspace-provider";
 import { Avatar } from "@/components/patient-identity";
+import { SessionActions } from "@/components/session-actions";
 export function NurseHeader({
   activePage,
 }: {
   activePage: "dashboard" | "requests" | "visits" | "patients" | "profile" | "notifications";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const profile = useNurseProfile();
+  const name = profile.status === "ready" ? profile.data.displayName : "Profil perawat";
+  const staffCode = profile.status === "ready" ? profile.data.staffCode : profile.status === "error" ? "Profil belum dapat dimuat" : "Memuat profil…";
+  const initials = profile.status === "ready" ? name.split(/\s+/).slice(0, 2).map(part => part[0]).join("") : "";
   return (
     <>
       <a className="skip-link" href="#konten-utama">
@@ -26,7 +31,7 @@ export function NurseHeader({
               setMenuOpen(false);
             }}
           >
-            <Image src="/forcare-brand.png" alt="ForCare" width={215} height={68} priority />
+            <Image src="/images/forcare-brand.png" alt="ForCare" width={145} height={46} priority />
           </Link>
 
           <nav
@@ -66,6 +71,7 @@ export function NurseHeader({
           </nav>
 
           <div className="header-actions">
+            <SessionActions />
             <Link
               href="/notifikasi"
               className={`notification-button${activePage === "notifications" ? " is-active" : ""}`}
@@ -80,12 +86,12 @@ export function NurseHeader({
               className={`profile-button${activePage === "profile" ? " is-active" : ""}`}
               aria-current={activePage === "profile" ? "page" : undefined}
               onClick={() => setMenuOpen(false)}
-              aria-label={`Lihat profil ${nurse.name}`}
+              aria-label={`Lihat profil ${name}`}
             >
-              <Avatar initials={nurse.initials} nurse />
+              <Avatar initials={initials} nurse />
               <span className="profile-copy">
-                <strong>{nurse.name}</strong>
-                <span>{nurse.id}</span>
+                <strong>{name}</strong>
+                <span>{staffCode}</span>
               </span>
             </Link>
             <button

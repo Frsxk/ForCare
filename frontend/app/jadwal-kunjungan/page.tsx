@@ -1,12 +1,5 @@
-import type { Metadata } from "next";
-import { VisitSchedulePage } from "@/components/visit-schedule-page";
+import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
 
-export const metadata: Metadata = {
-  title: "Jadwal Kunjungan | ForCare",
-  description:
-    "Jadwal kunjungan homecare perawat, rekam medis, dan riwayat kunjungan pasien.",
-};
+export const metadata = { title: "Jadwal Kunjungan | ForCare" };
 
-export default function Page() {
-  return <VisitSchedulePage />;
-}
+export default function Page() { return <UnavailableWorkflow title="Jadwal Kunjungan" activePage="visits" />; }

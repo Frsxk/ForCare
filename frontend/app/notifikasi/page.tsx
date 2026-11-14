@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { NurseNotificationsPage } from "@/components/nurse-notifications-page";
+import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
 
-export const metadata: Metadata = {
-  title: "Notifikasi | ForCare",
-  description: "Notifikasi pengajuan homecare, jadwal kunjungan, dan rekam medis perawat.",
-};
+export const metadata = { title: "Notifikasi | ForCare" };
 
-export default function Page() {
-  return <NurseNotificationsPage />;
-}
+export default function Page() { return <UnavailableWorkflow title="Notifikasi" activePage="notifications" />; }

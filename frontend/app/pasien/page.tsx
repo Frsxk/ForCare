@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { PatientDashboard } from "@/components/patient-dashboard";
+import { PatientLivePage } from "@/components/patient-live-pages";
 
-export const metadata: Metadata = { title: "Beranda Pasien | ForCare", description: "Ringkasan jadwal, check-in, dan perawatan pasien ForCare." };
-export default function Page() { return <PatientDashboard />; }
+export default function Page() { return <PatientLivePage section="dashboard" />; }

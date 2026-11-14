@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { HomecareRequestsPage } from "@/components/homecare-requests-page";
+import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
 
-export const metadata: Metadata = {
-  title: "Pengajuan Homecare | ForCare",
-  description: "Tinjau dan putuskan pengajuan homecare dari pasien Anda.",
-};
+export const metadata = { title: "Pengajuan Homecare | ForCare" };
 
-export default function Page() {
-  return <HomecareRequestsPage />;
-}
+export default function Page() { return <UnavailableWorkflow title="Pengajuan Homecare" activePage="requests" />; }

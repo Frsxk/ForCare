@@ -1,0 +1,16 @@
+.live-stack { display: grid; gap: 28px; }
+.live-card { padding: 24px; min-width: 0; }
+.live-card h2, .live-card h3 { margin-bottom: 12px; }
+.live-card p { margin-block: 10px; }
+.live-feedback { padding: 16px 20px; overflow-wrap: anywhere; }
+.live-feedback p { margin-block: 10px; }
+.live-feedback small { display: block; margin-bottom: 12px; }
+.live-two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.live-prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.live-card ol, .live-card ul { padding-left: 24px; }
+.live-card li { margin-block: 8px; overflow-wrap: anywhere; }
+.live-card details { padding-block: 12px; border-top: 1px solid var(--border); }
+.live-card summary { cursor: pointer; font-weight: 700; }
+.live-patients-table { min-width: 720px; }
+.live-session-actions { max-width: 1200px; margin: 0 auto; padding: 20px 24px 40px; display: flex; justify-content: flex-end; gap: 16px; align-items: center; }
+@media (max-width: 700px) { .live-two-column { grid-template-columns: 1fr; } .live-card { padding: 18px; } }

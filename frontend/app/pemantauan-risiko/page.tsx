@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { RiskMonitoringPage } from "@/components/risk-monitoring-page";
+import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
 
-export const metadata: Metadata = {
-  title: "Pemantauan Risiko | ForCare",
-  description: "Tinjau dan setujui tingkat risiko pasien dalam pemantauan.",
-};
+export const metadata = { title: "Pemantauan Risiko | ForCare" };
 
-export default function Page() {
-  return <RiskMonitoringPage />;
-}
+export default function Page() { return <UnavailableWorkflow title="Pemantauan Risiko" activePage="patients" />; }

@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { PatientCheckinPage } from "@/components/patient-checkin-page";
+import { PatientLivePage } from "@/components/patient-live-pages";
 
-export const metadata: Metadata = { title: "Check-in Harian | ForCare" };
-export default function Page() { return <PatientCheckinPage />; }
+export default function Page() { return <PatientLivePage section="checkin" />; }

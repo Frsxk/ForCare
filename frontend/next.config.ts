@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
+import { apiRewrite } from "./lib/api/proxy";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  rewrites() {
+    return [apiRewrite(process.env.FORCARE_BACKEND_ORIGIN)];
+  },
   experimental: {
     agentFeedback: true,
   },

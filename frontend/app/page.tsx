@@ -1,5 +1,3 @@
-import { NurseDashboard } from "@/components/nurse-dashboard";
+import { LiveNurseDashboard } from "@/components/nurse-workspace-pages";
 
-export default function Home() {
-  return <NurseDashboard />;
-}
+export default function Home() { return <LiveNurseDashboard />; }
