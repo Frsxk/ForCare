@@ -130,7 +130,7 @@ Lists default to 20, maximum 100. Cursors expire after 15 minutes and bind to th
 
 ## Capabilities and limits
 
-`GET /capabilities` requires authentication. Identity, profiles, patient scope, nurse directory, clinical records and check-ins are enabled. Assessment/scoring, analysis and retrieval/push remain gated; availability/bookings are missing. The assessment read endpoint is available to report the unavailable score state, not to calculate a numerical score.
+`GET /capabilities` requires authentication. Identity, profiles, patient scope, nurse directory, clinical records and check-ins are enabled. Assessment/scoring, analysis drafts and knowledge retrieval/web push are still reported as gated policy metadata: `analysisDrafts` uses G02, while `knowledgeRetrieval` and `webPush` use G05. These existing values are not runtime feature switches. Approved-corpus knowledge search and asynchronous analysis/review/publication routes are implemented behind their own authorization and corpus gates as documented below; push delivery is not implemented. Availability/bookings are missing, and notifications are not built. The assessment read endpoint is available to report the unavailable score state, not to calculate a numerical score. Numerical clinical scoring remains unavailable regardless of corpus or analysis status.
 
 Rate limits return 429 `RATE_LIMITED` with `Retry-After`: login 5 attempts per IP/email per 15 minutes plus 30 per IP, registration 3 per IP per hour, authenticated requests 120 per account per minute. Limits are per process and use the direct socket address, not forwarded headers. Run one API process; proxy-aware client IP policy and shared limiting remain deployment work.
 
@@ -266,6 +266,12 @@ Submission takes `{expectedVersion}`. Exact-key retries replay the original outc
 
 To correct a submitted report, create a new draft with `supersedesCheckInId` referencing an owned submitted report. The original remains. Responses include `id`, `patientId`, `localDate`, `timeZone`, `version`, `status`, `condition`, `note`, scalar `medicationAdherence`, observations with stable IDs, `supersedesCheckInId`, `submittedAt`, `createdAt`, `updatedAt`. Cursor filters are bound to status as well as session/ownership.
 
+## Approved knowledge search
+
+`POST /knowledge/search` is an implemented nurse-only route with Origin, cookie, CSRF and `Idempotency-Key`. It takes exactly `{query,locale:"id|en",limit}` with a 1–1000-character trimmed query and integer limit 1–20. It returns the selected positive `corpusVersion` and up to `limit` lexical-search chunks with immutable IDs, titles/versions and excerpts; no matches returns `chunks: []`. Retrieval uses only the latest approved documents in the fixed approved corpus, not draft or model-memory content. Its nonnegative `score` is lexical retrieval rank, never clinical scoring. If no approved corpus is available, it returns 503 `GATE_UNAVAILABLE` with gate G05.
+
+The [README operator command](README.md#controlled-knowledge-corpus) controls draft import and explicit synthetic-only attestation; this route does not mutate the corpus or grant approval authority.
+
 ## Cited analysis drafts
 
 All analysis writes are restricted to the current primary nurse and require Origin, CSRF and `Idempotency-Key`. A generated draft is not approval, and a review decision is not publication.
@@ -278,7 +284,7 @@ All analysis writes are restricted to the current primary nurse and require Orig
 - `POST /analyses/:id/reviews` takes `{decision:"approve|reject|changes_requested",comment,expectedVersion,revisionNumber}` and returns 201. Nonapproval requires a comment. The decision binds one waiting gate; `changes_requested` returns the snapshot to draft and requires a new revision for new content.
 - `POST /analyses/:id/publish` takes `{expectedVersion,revisionNumber,reviewId}` and returns 200 only after exact approval and graph reconciliation. A same-request replay returns the original publication after current access checks.
 
-The separate worker uses PostgreSQL leases, attempt receipts and LangGraph checkpoints. Review persistence is durable even if reconciliation is temporarily unavailable; publication cannot bypass an unreconciled gate. No analysis route calculates clinical risk or authorizes medication, diagnosis, treatment or an emergency response.
+The separate worker uses PostgreSQL leases, attempt receipts and LangGraph checkpoints. Review persistence is durable even if reconciliation is temporarily unavailable; publication cannot bypass an unreconciled gate. The required sequence is: persist the explicit review, let the separate worker reconcile that exact gate, then issue the independent publish request. The separate fixed-Google analysis worker does not change API capability metadata or calculate a score. No analysis route calculates clinical risk or authorizes medication, diagnosis, treatment or an emergency response.
 
 ## Observations, confirmation and score availability
 

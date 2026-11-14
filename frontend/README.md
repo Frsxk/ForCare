@@ -1,69 +1,80 @@
-# ForCare — Frontend Perawat
+# ForCare — Frontend
 
-Frontend perawat berdasarkan referensi Beranda, Pengajuan Homecare, Detail Pengajuan, Jadwal Kunjungan, dan Rekam Medis Kunjungan, menggunakan Next.js App Router, React, TypeScript, dan Tailwind CSS. Ikon menggunakan Lucide; font Lato dan Plus Jakarta Sans disajikan dari paket lokal Fontsource.
+Frontend Next.js App Router, React, TypeScript, dan Tailwind CSS untuk ruang kerja pasien dan perawat utama. Ikon menggunakan Lucide; font disajikan dari paket lokal Fontsource. Autentikasi sesi berbasis cookie dan data produk aktif diambil melalui API Elysia, bukan koleksi data mock.
+
+Pasien dapat mendaftar sendiri, masuk/keluar, membaca profil dan panduan perawatan aktif, mengubah kontak, membuat/mengoreksi draf check-in, menyerahkan check-in secara eksplisit, serta melihat riwayat dan proyeksi analisis yang sudah dipublikasikan. Perawat diprovisikan melalui operasi operator, hanya membaca pasien dalam penugasannya, membuat/mengoreksi snapshot medis berversi, serta meninjau, merevisi, menyetujui, dan memublikasikan draf analisis melalui tindakan terpisah.
 
 ## Menjalankan secara lokal
 
-Jalankan dari folder `frontend`:
+Untuk demo native yang terisolasi dan dapat direproduksi, ikuti [panduan backend](../backend/README.md#reproducible-native-localhost-demo): Bun 1.4.2, PostgreSQL 16 sekali pakai pada `127.0.0.1:55432`, environment privat di luar repository, migrasi sebelum API/worker, serta langkah operator dan pembersihan yang hanya menargetkan container terpilih. Dokumen tersebut juga memisahkan mode ini dari Compose dan produksi. Root `.env.example` hanya template variabel, bukan environment demo lengkap atau sumber kredensial.
+
+Default yang konsisten adalah frontend `http://localhost:3000` dan API `127.0.0.1:3001`. Setelah database dimigrasikan dan API dijalankan, jalankan dari folder `frontend`:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000). Halaman ini tidak memerlukan backend atau variabel lingkungan.
+`FORCARE_BACKEND_ORIGIN` menentukan origin API dan berdefault ke `http://127.0.0.1:3001`. Nilai harus berupa origin HTTP(S) tanpa kredensial, path, query, atau fragment. `next.config.ts` hanya mengarahkan permintaan same-origin `/api/v1/:path*` ke `/api/v1/:path*` pada backend; konfigurasi backend tidak diekspos sebagai variabel klien. Jika port API diubah, isi origin tersebut sebelum menjalankan Next.js. Untuk server produksi, nilai ini dipakai ketika `npm run build`; ubah port berarti build harus dijalankan ulang, bukan hanya `npm start`.
 
-## Cakupan halaman
+Untuk proses produksi:
 
-- Header ForCare, profil perawat, notifikasi, dan navigasi mobile.
-- Statistik pasien, pengajuan menunggu, dan kunjungan hari ini.
-- Tabel pasien yang perlu perhatian dengan tingkat risiko dan sumber data.
-- Pengajuan terbaru, kunjungan hari ini, dan jadwal terdekat.
-- Dialog detail pasien, pencarian pasien, serta simulasi penandaan sudah ditinjau.
-- Halaman detail pengajuan berisi identitas pasien, screening dan anamnesis, ringkasan risiko, jadwal diminta, serta simulasi keputusan perawat.
+```sh
+npm run build
+npm start
+```
 
-Halaman yang tersedia:
+Deployment browser produksi wajib memakai HTTPS pada frontend dan origin tersebut harus tercantum persis dalam `AUTH_ALLOWED_ORIGINS`. Secara terpisah, mode native loopback untuk Chromium pada localhost menggunakan `HOST=127.0.0.1`, `AUTH_LOCAL_HTTP_TEST=true`, dan rewrite same-origin yang sudah ada. Defaultnya frontend `http://localhost:3000` dengan API `127.0.0.1:3001`; jika memakai `http://localhost:3400`, origin persis itu harus dicantumkan dalam `AUTH_ALLOWED_ORIGINS`. Atribut `Secure` dan `__Host-` cookie tetap tidak berubah. Dukungan ini terbatas pada Chromium di localhost, bukan jaminan untuk host HTTP sembarangan, browser lain, Compose, atau kompatibilitas browser umum. Lihat [panduan backend](../backend/README.md#reproducible-native-localhost-demo) untuk konfigurasi yang dapat direproduksi. HTTPS produksi tidak berubah.
 
-- `/`: Beranda perawat.
-- `/pengajuan-homecare`: daftar pengajuan, filter Semua/Menunggu/Diterima/Ditolak, dan pencarian nama atau nomor RM.
-- `/pengajuan-homecare/[requestId]`: detail masing-masing pengajuan, misalnya `/pengajuan-homecare/HC-0014`. Tombol Tinjau di daftar dan Beranda membuka halaman ini. Penolakan membutuhkan alasan; pengajuan yang sudah diputuskan menampilkan hasil keputusan.
-- `/jadwal-kunjungan`: tab Mendatang/Selesai/Semua, jadwal hari ini, jadwal mendatang, dan riwayat kunjungan. Tombol baris membuka data pasien atau halaman rekam medis.
-- `/jadwal-kunjungan/[visitId]`: formulir rekam medis tiap kunjungan, misalnya `/jadwal-kunjungan/VIS-002` untuk Ilham. Berisi penanggung jawab, waktu, tanda vital, observasi, tindakan, log alat/bahan, kelengkapan catatan, serta referensi pasien. Simpan draf menerima catatan yang belum lengkap; penyelesaian memerlukan keempat bagian lengkap dan waktu selesai setelah waktu mulai. Kunjungan selesai tampil dalam mode baca.
+Frontend tidak disertakan dalam Docker Compose. Worker analisis klinis juga proses backend terpisah; perintah `ai:smoke` hanya memeriksa konektivitas provider nonmedis dan tidak menggantikan worker tersebut.
 
-Menu Pasien & Rekam Medis masih membuka dialog ringkasan; halaman terpisah dapat ditambahkan pada tahap selanjutnya.
+## Route dan sesi
 
-## Data contoh dan integrasi
+Route publik:
 
-Semua nama, ID, tanggal, jadwal, dan ringkasan merupakan placeholder di `lib/dashboard-data.ts` dan `lib/homecare-request-details.ts`. Detail Ilham mengikuti PNG; informasi tambahan pasien lain menampilkan "Belum tersedia". Tanggal demo mengikuti referensi: 12 November 2026. Statistik dihitung dari koleksi data contoh tersebut.
+- `/daftar`: pendaftaran akun pasien; pendaftaran publik tidak membuat akun perawat.
+- `/login`: autentikasi pasien atau perawat yang sudah diprovisikan. Server menetapkan cookie sesi; frontend memeriksa sesi dan mengarahkan pengguna ke ruang kerja sesuai perannya. Logout mengirim permintaan pengakhiran sesi ke server.
 
-Status pengajuan, kunjungan, draf, rekam medis, tinjauan pasien, dan notifikasi disimpan dalam context React yang dipakai bersama semua halaman. Keputusan pengajuan ikut memperbarui daftar pengajuan dan jumlah pengajuan menunggu di Beranda. Menyimpan draf tidak mengubah status kunjungan; menyelesaikan catatan memperbarui status dan hitungan selesai hari ini. State yang disimpan bertahan saat berpindah halaman melalui navigasi aplikasi dan kembali ke kondisi awal ketika halaman dimuat ulang. Belum ada panggilan API atau penyimpanan data ke backend.
+Ruang kerja pasien:
 
-Isi awal formulir Ilham mengikuti PNG dan menampilkan 4 dari 4 bagian lengkap. Validasi hanya memeriksa pengisian serta format data; tidak menilai kondisi klinis. Log alat/bahan dapat ditambah atau dihapus; jika tidak ada yang digunakan, pilih pernyataan "Tidak menggunakan alat atau bahan medis". Referensi pasien mengarah ke halaman detail rekam medis pasien.
+- `/pasien`: beranda dan ringkasan data pasien yang sedang masuk.
+- `/pasien/profil`: profil, identitas, perawat utama, dan kontak yang dimiliki pasien.
+- `/pasien/profil/kontak`: perubahan nomor telepon, alamat, nama, dan telepon kontak darurat melalui API.
+- `/pasien/check-in`: pembuatan draf, koreksi berversi, penyerahan eksplisit, dan riwayat check-in. Draf belum dianggap sebagai laporan yang diserahkan.
+- `/pasien/panduan`: instruksi perawatan aktif dan proyeksi analisis untuk pasien yang telah dipublikasikan. Draf, catatan internal, dan snapshot medis mentah tidak ditampilkan di sini.
+- `/pasien/homecare`, `/pasien/homecare/pesan`, dan `/pasien/notifikasi`: halaman status layanan belum tersedia; tidak membuat pemesanan atau riwayat notifikasi palsu.
 
-Jadwal contoh berada di `lib/visit-data.ts`, dengan hari demo 12 November 2026. Tab Mendatang hanya menampilkan kunjungan terjadwal mulai hari demo. Selesai memfilter berdasarkan status, dan Semua mencakup riwayat. Kunjungan 17 November tetap terjadwal; kunjungan setelah hari demo tidak dapat diselesaikan. Satu kunjungan lampau ditambahkan sebagai data contoh untuk tab riwayat.
+Ruang kerja perawat:
+
+- `/`: beranda perawat dan daftar pasien dalam cakupan penugasan aktif.
+- `/profil`: profil perawat dari server dan logout sesi.
+- `/pasien-rekam-medis`: pencarian pasien yang ditugaskan kepada perawat tersebut.
+- `/pasien-rekam-medis/[patientId]`: profil pasien, observasi, check-in yang diserahkan, panduan aktif, serta editor snapshot medis. Pembuatan snapshot dan koreksi penuh menghasilkan revisi immutable; kolom terstruktur memakai editor JSON tervalidasi dan waktu ditulis dalam UTC yang eksplisit.
+- Panel analisis pada detail pasien membuat draf dari check-in yang telah diserahkan, memeriksa status pekerjaan, menampilkan rujukan bukti, serta mendukung revisi dan tinjauan perawat. Persetujuan tidak otomatis memublikasikan. Publikasi merupakan tindakan eksplisit setelah worker merekonsiliasi jeda tinjauan yang persisten.
+
+## Integrasi API dan alur analisis
+
+`components/session-provider.tsx` memegang sesi terverifikasi. Klien pada `lib/api/` memakai endpoint same-origin, menangani CSRF dan kunci idempotensi untuk mutasi, serta menjaga pembatalan dan isolasi hasil terlambat pada pergantian sesi. Snapshot dan tulisan analisis menggunakan pembacaan ulang ID yang tepat; keadaan tulis yang belum pasti tidak dianggap berhasil hanya karena halaman dimuat ulang.
+
+Dokumentasi rute, otorisasi, CSRF, idempotensi, serta batas validasi berada di [referensi API](../backend/API.md). Provisikan perawat, kelola kredensial synthetic secara privat, serta tetapkan nomor rekam medis dan perawat utama melalui CLI terkontrol yang dijelaskan pada [panduan backend](../backend/README.md), bukan melalui route admin frontend.
+
+Worker analisis berjalan terpisah dari API dan menggunakan PostgreSQL untuk jeda tinjauan yang dapat dipulihkan. Model utamanya Google `gemini-4-hydrogen`; `gemini-3.5-flash-lite` hanya dicoba setelah respons HTTP 429 numerik. Draf mengutip pengamatan/check-in, instruksi, atau potongan korpus yang disetujui. Worker tidak memublikasikan hasil dan tidak menghasilkan skor klinis. `bun run ai:smoke` hanyalah CLI konektivitas provider dengan prompt nonmedis, bukan pipeline draf klinis.
 
 ## Struktur utama
 
-- `app/page.tsx`: halaman beranda.
-- `components/nurse-dashboard.tsx`: komponen dashboard dan interaksi.
-- `components/homecare-requests-page.tsx`: daftar pengajuan, pencarian, dan filter status.
-- `app/pengajuan-homecare/[requestId]/page.tsx`: route detail dan penanganan nomor pengajuan yang tidak ditemukan.
-- `components/homecare-request-detail-page.tsx`: tata letak detail pengajuan.
-- `components/homecare-decision.tsx`: simulasi menerima atau menolak pengajuan.
-- `components/visit-schedule-page.tsx`: jadwal, tab filter, dan tautan ke profil pasien.
-- `app/jadwal-kunjungan/[visitId]/page.tsx`: route detail rekam medis dan penanganan kunjungan tidak ditemukan.
-- `components/visit-record-page.tsx`: formulir dan mode baca rekam medis kunjungan.
-- `components/visit-record.css`: tata letak dan tampilan formulir rekam medis.
-- `components/patient-record-page.tsx`: empat tab detail rekam medis pasien.
-- `components/nurse-header.tsx`: header dan navigasi bersama.
-- `components/nurse-data-provider.tsx`: state contoh yang dipakai lintas halaman.
-- `components/ui/modal.tsx`: dialog native dengan fokus terkurung dan dukungan Escape.
-- `lib/dashboard-data.ts`: tipe dan data placeholder.
-- `lib/homecare-request-details.ts`: data contoh identitas, screening, risiko, dan jadwal.
-- `lib/visit-data.ts`: data jadwal dan pemformatan tanggal demo.
-- `lib/visit-medical-record.ts`: tipe catatan, data contoh, dan pemeriksaan kelengkapan formulir.
-- `app/globals.css`: tema, tata letak, dan breakpoint responsif.
-- `public/forcare-mark.svg`: ikon ForCare yang dibuat mengikuti referensi.
+- `app/login`, `app/daftar`, `app/pasien`, dan route ruang kerja perawat: pembungkus route untuk komponen terautentikasi.
+- `components/auth-pages.tsx`: pendaftaran dan login.
+- `components/session-provider.tsx`: sesi cookie terverifikasi, identitas peran, dan logout.
+- `components/patient-live-pages.tsx`: beranda, profil/kontak, check-in, serta panduan pasien.
+- `components/nurse-workspace-provider.tsx`: pembacaan API dan isolasi sumber daya untuk ruang kerja perawat.
+- `components/nurse-workspace-pages.tsx`: daftar/detail pasien penugasan, profil perawat, dan status route belum tersedia.
+- `components/medical-snapshot-panel.tsx`: snapshot medis awal dan koreksi immutable berversi.
+- `components/patient-analysis.tsx`: pembuatan draf, polling terbatas, revisi, tinjauan, persetujuan, dan publikasi terpisah.
+- `lib/api/`: transport same-origin dan klien akun pasien, perawat, check-in, panduan, serta analisis.
+- `lib/api/proxy.ts`: definisi satu rewrite `/api/v1/:path*` yang digunakan oleh `next.config.ts`.
+- `app/globals.css` dan stylesheet komponen: tema, tata letak, serta breakpoint responsif.
+
+Sejumlah komponen, provider, dan file data mock awal seperti `components/nurse-data-provider.tsx`, `lib/dashboard-data.ts`, dan `lib/visit-data.ts` dipertahankan sebagai sumber referensi yang tidak dipakai oleh route produk aktif. Isi file tersebut bukan indikator fitur yang tersedia, bukan penyimpanan runtime, dan bukan backend.
 
 ## Pemeriksaan
 
@@ -72,26 +83,28 @@ npm run build
 npx tsc --noEmit
 ```
 
-## Pasien & Rekam Medis
+## Pasien dan rekam medis perawat
 
-Route `/pasien-rekam-medis` menampilkan enam pasien sesuai PNG. Pencarian nama/nomor RM dapat digabung dengan filter risiko. Pemantauan Risiko membuka halaman peninjauan risiko; tombol rekam medis membuka halaman detail pasien dengan empat tab. Data demografi, check-in, dan risiko adalah placeholder di `lib/patient-directory-data.ts`. Kunjungan berikutnya memakai state jadwal bersama.
+`/pasien-rekam-medis` menampilkan hasil API yang dibatasi oleh penugasan perawat aktif, bukan direktori enam pasien contoh. Pencarian memfilter nama/nomor rekam medis melalui layanan; nomor rekam medis dan perawat utama dipasangkan melalui CLI operator. Detail pasien hanya dapat diakses dalam cakupan yang diizinkan server.
 
-## Pemantauan Risiko
+Snapshot medis memuat referensi sumber, diagnosis, alergi, tindakan, keluhan, observasi, waktu masuk/pulang UTC, dan catatan internal sesuai kontrak. Koreksi adalah revisi penuh baru, bukan penyuntingan histori. Validasi format tidak menyimpulkan kondisi klinis atau mengisi default medis yang tidak ada di sumber. Check-in dan panduan aktif dibaca dari data pasien terkait.
 
-Route `/pemantauan-risiko` mengikuti referensi PNG: statistik risiko, pencarian, pemilihan pasien, tingkat risiko, persetujuan perawat, dan akses rekam medis. Risiko awal merupakan placeholder; frontend tidak menghitung skor klinis. Pilihan radio belum mengubah risiko hingga disetujui. Persetujuan memperbarui statistik, daftar pasien, dan badge risiko Beranda melalui context bersama; state kembali ke data awal saat refresh. Draf AI awal tetap ditampilkan sebagai referensi.
+## Pemantauan risiko
+
+Route `/pemantauan-risiko` menampilkan status layanan belum tersedia. Penilaian dan skor risiko klinis numerik tidak diimplementasikan, dihitung frontend, atau disimpulkan dari draf AI. Persetujuan analisis hanya berlaku pada revisi draf tersebut dan tidak menjadi skor maupun publikasi otomatis.
 
 ## Profil perawat
 
-Route `/profil` dibuka dari avatar/nama perawat pada header. Identitas menggunakan placeholder terpusat, jumlah pasien dan kunjungan memakai data bersama. Empat checkbox preferensi notifikasi langsung tersimpan di context saat diubah dan bertahan saat navigasi aplikasi. Preferensi belum terhubung ke layanan notifikasi; perubahan tidak menghapus notifikasi contoh yang sudah ada. Notifikasi dari profil dan header mengarah ke `/notifikasi`, dengan hitungan belum dibaca yang berasal dari item notifikasi bersama. Keluar mengakhiri sesi demo lokal, mereset state contoh, dan menampilkan tombol masuk kembali; belum ada autentikasi/backend. Refresh juga mengembalikan seluruh data contoh.
+Route `/profil` dibuka dari avatar/nama perawat pada header dan membaca identitas, kode staf, disiplin sumber, email, telepon, serta zona waktu tampilan dari sesi API yang aktif. Logout meminta server mengakhiri sesi cookie dan kembali ke login; ini bukan reset state demo lokal. Preferensi notifikasi dan hitungan belum dibaca dari mock awal bukan fitur ruang kerja aktif.
 
-## Notifikasi
+## Layanan yang belum tersedia
 
-Route `/notifikasi` mengikuti PNG terbaru dengan enam item riwayat contoh, tiga di antaranya belum dibaca. Tab Semua, Pengajuan, Jadwal kunjungan, dan Rekam medis mendukung klik serta navigasi keyboard (panah, Home, End). Membuka item menandainya dibaca dan menuju detail pengajuan/kunjungan terkait. Tandai semua dibaca berlaku untuk seluruh kategori tanpa menghapus riwayat; hitungan pada Profil ikut berubah. State bertahan saat navigasi aplikasi dan kembali ke awal saat refresh/keluar demo. Isi notifikasi adalah rekaman kejadian contoh pada `lib/notification-data.ts`, sehingga teks riwayat tidak berubah ketika status pengajuan atau rekam medis kemudian diperbarui. Preferensi Profil mengatur state pilihan untuk integrasi mendatang, bukan menyaring riwayat notifikasi yang sudah ada. Belum ada API/push notifikasi.
+Route berikut secara eksplisit menampilkan status belum tersedia, bukan mensimulasikan layanan:
 
-## Detail rekam medis pasien
+- `/pengajuan-homecare` dan `/pengajuan-homecare/[requestId]`: pengajuan serta keputusan homecare belum terhubung.
+- `/jadwal-kunjungan` dan `/jadwal-kunjungan/[visitId]`: penjadwalan, kunjungan, dan formulir catatan kunjungan belum tersedia.
+- `/notifikasi` dan `/pasien/notifikasi`: riwayat notifikasi, status baca, preferensi pengiriman, serta browser push belum tersedia.
+- `/pemantauan-risiko`: skor dan penilaian risiko klinis belum tersedia.
+- `/pasien/homecare` dan `/pasien/homecare/pesan`: pemesanan, pemilihan perawat, dan jadwal homecare belum tersedia.
 
-Route `/pasien-rekam-medis/[patientId]` tersedia untuk enam pasien; nomor tidak dikenal menampilkan 404. Empat tab mengikuti PNG dan mendukung navigasi keyboard. Riwayat medis dapat diedit, dibatalkan, atau disimpan (diagnosis utama, alergi, tindakan terakhir, dan tanggal valid wajib diisi; diagnosis sekunder opsional). Persetujuan penilaian menyimpan ringkasan dan memperbarui risiko bersama. Kembali ke draf AI hanya mengembalikan isi formulir; keputusan tersimpan baru diganti sesudah disetujui lagi. AI berupa placeholder tanpa panggilan model/API.
-
-Profil lengkap dan tiga check-in Ilham mengikuti referensi; identitas pasien lain memakai data direktori dan informasi yang belum ada ditulis Belum tersedia. Riwayat perawatan mengambil kunjungan selesai dari context. Untuk Ilham yang belum memiliki kunjungan selesai, satu kartu contoh sesuai PNG ditampilkan sebagai data demo; setelah kunjungan Ilham diselesaikan, catatan aktual sesi menggantikannya. Contoh ini tidak mengubah status jadwal. Draf kunjungan belum dianggap selesai. Riwayat dan penilaian bertahan saat navigasi dan direset saat refresh/keluar demo. Tombol rekam medis pada direktori, pemantauan risiko, dan formulir kunjungan mengarah ke halaman detail ini.
-
-Tombol Lihat pasien pada jadwal mendatang membuka `/pasien-rekam-medis/[patientId]?tab=profile`. Tab detail pasien mengikuti parameter `tab` (profile, medical, assessment, care), sehingga tautan profil selalu membuka Profil Pasien meskipun pengguna sebelumnya melihat tab lain. Akses langsung ke formulir kunjungan yang tanggalnya setelah hari demo dialihkan ke profil pasien.
+Tidak ada keputusan pengajuan, jadwal kunjungan, skor, notifikasi, atau data risiko contoh yang boleh diperlakukan sebagai data produk langsung. Rujukan visual awal tidak mengubah batas implementasi ini.
