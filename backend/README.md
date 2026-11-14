@@ -18,7 +18,7 @@ bun test
 - `GET /health/live`: returns `200` without contacting PostgreSQL or AI.
 - `GET /health/ready`: runs `SELECT 1`, then returns `200`. It returns `503` if the database probe fails, without exposing connection details.
 
-The `/api/v1` routes cover accounts/sessions, owned profiles, nurse directory and patient scope, versioned medical records, patient-bound clinical sources and care instructions, check-in drafts/submissions, observation history/confirmation, and assessment availability metadata. Authenticated mutations require CSRF; domain writes also require `Idempotency-Key` and version checks where specified. Patients see approved care projections, never raw medical snapshots or internal notes. Numerical scoring is gated; booking, analysis, notifications and push are absent. [API.md](API.md) lists the exact payloads and access rules.
+The `/api/v1` routes cover accounts/sessions, owned profiles, nurse directory and patient scope, versioned medical records, patient-bound clinical sources and care instructions, check-in drafts/submissions, observation history/confirmation, assessment availability metadata, approved knowledge search, and asynchronous cited analysis drafts. Authenticated mutations require CSRF; domain writes also require `Idempotency-Key` and version checks where specified. Analysis generation is only a draft: the current primary nurse must review it, graph reconciliation must complete, and publication is a separate explicit write. Patients see only published patient-facing projections, never raw medical snapshots or internal notes. Numerical scoring is gated; booking, notifications and push are absent. [API.md](API.md) lists the exact payloads and access rules.
 
 ## Environment
 
@@ -32,12 +32,15 @@ The `/api/v1` routes cover accounts/sessions, owned profiles, nurse directory an
 - `AI_API_KEY`, `AI_MODEL`: required when AI is enabled.
 - `AI_BASE_URL`: optional HTTPS Chat Completions endpoint. HTTP is accepted only for loopback development endpoints. Credentials, query strings and fragments are not allowed in the URL.
 - `AI_TIMEOUT_MS`: integer from `1` to `120000`, default `30000`. Provider retries are disabled.
+- `GOOGLE_API_KEY`: required by the analysis worker only; never supplied by the browser.
 - `AUTH_ALLOWED_ORIGINS`: required comma-separated exact origins. Production origins must be HTTPS; there is no wildcard or guessed default.
 - `AUTH_SESSION_SECRET`: required at least 32 characters for session IP hashing and cursor signing.
 - `AUTH_NURSE_EMAIL_DOMAIN`: optional exact nurse email domain. Leave unset to block nurse provisioning and nurse login; this deployment's approved synthetic value is `nurse.invalid`.
 - `AUTH_LOCAL_HTTP_TEST`: `true` only for loopback HTTP tests; it is rejected when `HOST` is not loopback.
 
 `BACKEND_PORT` controls the Compose host port, not the container listener. Compose disables `LANGSMITH_TRACING` and `LANGCHAIN_TRACING_V2`.
+
+Run migrations first, then start `bun run worker:analysis` as a separate process. The worker owns its LangGraph `PostgresSaver` setup, uses bounded PostgreSQL leases/attempt receipts, and resumes persisted review interrupts. It does not publish analyses. The API can persist reviews without a running worker; publication remains unavailable until a worker reconciles that exact gate.
 
 Rate limits are per API process. Cursors use the configured secret, expire after 15 minutes and are bound to the account, session, scope and filter. Run one API process until a shared limiter exists. Limits are 5 login attempts per IP/email pair per 15 minutes, an additional 30 login requests per IP per 15 minutes, 3 registrations per IP per hour, and 120 authenticated requests per account per minute. A full limiter rejects new buckets rather than evicting active limits. Client addresses come from the direct socket, not `X-Forwarded-For`; a same-host proxy therefore shares its IP limit across clients until a trusted-proxy policy is configured.
 

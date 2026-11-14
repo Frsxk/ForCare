@@ -1,6 +1,6 @@
 # Implemented backend API
 
-Base path: `/api/v1`. This reference covers the implemented backend: identity, profiles, clinical sources/care instructions, check-ins, observations and assessment availability. Frontend integration, booking, AI analysis, notifications and push delivery are pending. Numerical scoring is explicitly unavailable until its clinical policy is approved.
+Base path: `/api/v1`. This reference covers the implemented backend: identity, profiles, clinical sources/care instructions, check-ins, observations, assessment availability, approved knowledge search and reviewed analysis drafts. Booking, notifications and push delivery are pending. Numerical scoring is explicitly unavailable until its clinical policy is approved.
 
 ## Browser session contract
 
@@ -265,6 +265,20 @@ The server derives patient identity, local date and time zone from the session; 
 Submission takes `{expectedVersion}`. Exact-key retries replay the original outcome; a new key still has to satisfy current version rules. Both submitted parent content and observation/adherence child membership are immutable at the database boundary. PUT/PATCH after submission return 409 `INVALID_TRANSITION`.
 
 To correct a submitted report, create a new draft with `supersedesCheckInId` referencing an owned submitted report. The original remains. Responses include `id`, `patientId`, `localDate`, `timeZone`, `version`, `status`, `condition`, `note`, scalar `medicationAdherence`, observations with stable IDs, `supersedesCheckInId`, `submittedAt`, `createdAt`, `updatedAt`. Cursor filters are bound to status as well as session/ownership.
+
+## Cited analysis drafts
+
+All analysis writes are restricted to the current primary nurse and require Origin, CSRF and `Idempotency-Key`. A generated draft is not approval, and a review decision is not publication.
+
+- `POST /check-ins/:id/analyses` takes exactly `{promptVersion:"forcare-condition-v1",locale:"id|en"}` and returns 202 with a durable queued job. It snapshots the submitted check-in, current safe medical projection, current approved source/effective order heads, and exact approved corpus version. No client actor, model, prompt or patient selector is accepted.
+- `GET /analysis-jobs/:id` returns `{id,patientId,checkInId,status,analysisId,errorCode,version}`. Status is `queued|running|awaiting_review|failed|completed`; an analysis ID exists only after the generated snapshot is durably saved.
+- `GET /analyses?patientId=&status=&cursor=` applies caller scope before pagination. Patients receive published summaries only; nurses receive summaries for current primary patients.
+- `GET /analyses/:id` returns the immutable claims/evidence and workflow version to the current primary nurse. The owning patient can read only a published patient-facing projection with no private reviews or model/input metadata.
+- `POST /analyses/:id/revisions` takes `{expectedVersion,revisionNumber,claims}` and creates a new immutable ID/revision and fresh review gate. It never transfers the predecessor's review. Each claim needs bounded evidence from the bound input.
+- `POST /analyses/:id/reviews` takes `{decision:"approve|reject|changes_requested",comment,expectedVersion,revisionNumber}` and returns 201. Nonapproval requires a comment. The decision binds one waiting gate; `changes_requested` returns the snapshot to draft and requires a new revision for new content.
+- `POST /analyses/:id/publish` takes `{expectedVersion,revisionNumber,reviewId}` and returns 200 only after exact approval and graph reconciliation. A same-request replay returns the original publication after current access checks.
+
+The separate worker uses PostgreSQL leases, attempt receipts and LangGraph checkpoints. Review persistence is durable even if reconciliation is temporarily unavailable; publication cannot bypass an unreconciled gate. No analysis route calculates clinical risk or authorizes medication, diagnosis, treatment or an emergency response.
 
 ## Observations, confirmation and score availability
 
