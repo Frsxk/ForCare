@@ -2,6 +2,8 @@ import { createApp } from "./app";
 import { readAiConfig } from "./ai/config";
 import { createAuthService } from "./auth/service";
 import { createAssessmentService } from "./assessments/service";
+import { createAvailabilityService } from "./availability/service";
+import { createBookingService } from "./bookings/service";
 import { createCheckInService } from "./checkins/service";
 import { createClinicalService } from "./clinical/service";
 import { readAuthConfig, readServerConfig } from "./config";
@@ -11,6 +13,7 @@ import { createPatientService } from "./patients/service";
 import { createDatabase } from "./storage/database";
 import { createAnalysisService } from "./analysis/service";
 import { createKnowledgeService } from "./knowledge/service";
+import { createPriorityRequestService } from "./priority-requests/service";
 
 try {
   const config = readServerConfig(process.env);
@@ -27,6 +30,9 @@ try {
   const clinical = createClinicalService({ sql: database, config: authConfig });
   const checkins = createCheckInService({ sql: database, config: authConfig });
   const assessments = createAssessmentService({ sql: database, config: authConfig });
+  const availability = createAvailabilityService({ sql: database, config: authConfig });
+  const bookings = createBookingService({ sql: database, config: authConfig });
+  const priorityRequests = createPriorityRequestService({ sql: database, config: authConfig });
   const analysis = createAnalysisService({ sql: database, config: authConfig });
   const knowledge = createKnowledgeService({ sql: database, config: authConfig });
   const app = createApp(
@@ -39,7 +45,11 @@ try {
         clearTimeout(timer);
       }
     },
-    { auth, patients, clinical, checkins, assessments, analysis, knowledge, config: authConfig, rateLimiters },
+    {
+      auth, patients, clinical, checkins, assessments,
+      availability, bookings, priorityRequests,
+      analysis, knowledge, config: authConfig, rateLimiters,
+    },
   ).listen({
     hostname: config.hostname,
     port: config.port,

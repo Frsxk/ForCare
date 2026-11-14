@@ -4,6 +4,10 @@ import { authRoutes, type ClientIpResolver } from "./auth/routes";
 import type { AuthService } from "./auth/service";
 import { assessmentRoutes } from "./assessments/routes";
 import type { AssessmentService } from "./assessments/service";
+import { availabilityRoutes } from "./availability/routes";
+import type { AvailabilityService } from "./availability/service";
+import { bookingRoutes } from "./bookings/routes";
+import type { BookingService } from "./bookings/service";
 import { checkInRoutes } from "./checkins/routes";
 import type { CheckInService } from "./checkins/service";
 import { clinicalRoutes } from "./clinical/routes";
@@ -17,6 +21,8 @@ import { analysisRoutes } from "./analysis/routes";
 import type { AnalysisService } from "./analysis/service";
 import { knowledgeRoutes } from "./knowledge/routes";
 import type { KnowledgeService } from "./knowledge/service";
+import { priorityRequestRoutes } from "./priority-requests/routes";
+import type { PriorityRequestService } from "./priority-requests/service";
 
 export type AppServices = {
   auth?: AuthService;
@@ -24,6 +30,9 @@ export type AppServices = {
   clinical?: ClinicalService;
   checkins?: CheckInService;
   assessments?: AssessmentService;
+  availability?: AvailabilityService;
+  bookings?: BookingService;
+  priorityRequests?: PriorityRequestService;
   analysis?: AnalysisService;
   knowledge?: KnowledgeService;
   config?: AuthConfig;
@@ -115,6 +124,33 @@ export function createApp(checkDatabase: () => Promise<void>, services: AppServi
     app.use(analysisRoutes({
       auth: services.auth, analysis: services.analysis, config: services.config,
       rateLimiters, getClientIp: services.getClientIp,
+    }));
+  }
+  if (services.auth && services.availability && services.config) {
+    app.use(availabilityRoutes({
+      auth: services.auth,
+      availability: services.availability,
+      config: services.config,
+      rateLimiters,
+      getClientIp: services.getClientIp,
+    }));
+  }
+  if (services.auth && services.bookings && services.config) {
+    app.use(bookingRoutes({
+      auth: services.auth,
+      bookings: services.bookings,
+      config: services.config,
+      rateLimiters,
+      getClientIp: services.getClientIp,
+    }));
+  }
+  if (services.auth && services.priorityRequests && services.config) {
+    app.use(priorityRequestRoutes({
+      auth: services.auth,
+      priorityRequests: services.priorityRequests,
+      config: services.config,
+      rateLimiters,
+      getClientIp: services.getClientIp,
     }));
   }
 

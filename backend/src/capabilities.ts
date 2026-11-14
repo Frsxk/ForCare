@@ -12,8 +12,9 @@ export function capabilitySnapshot(): Record<string, Capability> {
     patientProfiles: { state: "enabled" },
     patientScope: { state: "enabled" },
     nurseDirectory: { state: "enabled" },
-    availability: { state: "missing", reason: "Availability is not built", gate: "G03" },
-    bookings: { state: "missing", reason: "Bookings are not built", gate: "G03" },
+    availability: { state: "enabled" },
+    bookings: { state: "enabled" },
+    priorityRequests: { state: "enabled" },
     clinicalRecords: { state: "enabled" },
     checkIns: { state: "enabled" },
     assessments: {

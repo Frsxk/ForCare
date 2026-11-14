@@ -2,11 +2,14 @@ import type { SQL } from "bun";
 import { createApp } from "../../src/app";
 import { createAssessmentService } from "../../src/assessments/service";
 import { createAuthService } from "../../src/auth/service";
+import { createAvailabilityService } from "../../src/availability/service";
+import { createBookingService } from "../../src/bookings/service";
 import { createCheckInService } from "../../src/checkins/service";
 import type { AuthConfig } from "../../src/config";
 import { createRateLimiters, type RateLimiters } from "../../src/http/rate-limit";
 import { createClinicalService } from "../../src/clinical/service";
 import { createPatientService } from "../../src/patients/service";
+import { createPriorityRequestService } from "../../src/priority-requests/service";
 import { testAuthConfig } from "./disposable-database";
 
 export const TEST_ORIGIN = "http://127.0.0.1:3000";
@@ -22,17 +25,26 @@ export function createTestApp(
   const clinical = createClinicalService({ sql, config });
   const checkins = createCheckInService({ sql, config });
   const assessments = createAssessmentService({ sql, config });
+  const availability = createAvailabilityService({ sql, config });
+  const bookings = createBookingService({ sql, config });
+  const priorityRequests = createPriorityRequestService({ sql, config });
   const app = createApp(async () => {}, {
     auth,
     patients,
     clinical,
     checkins,
     assessments,
+    availability,
+    bookings,
+    priorityRequests,
     config,
     rateLimiters,
     getClientIp: () => options.ip ?? "127.0.0.1",
   });
-  return { app, auth, patients, clinical, checkins, assessments, config, rateLimiters };
+  return {
+    app, auth, patients, clinical, checkins, assessments,
+    availability, bookings, priorityRequests, config, rateLimiters,
+  };
 }
 
 export function jsonRequest(
