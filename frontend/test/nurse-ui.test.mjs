@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 const ui = await import("../components/nurse-workspace-pages").catch(() => null);
 const getUi = () => { assert.ok(ui, "Real scoped nurse screens must exist"); return ui; };
 const patientId = "da5fca18-0822-4001-b503-dd2fb9fca072";
@@ -20,7 +20,10 @@ test("dashboard count is from loaded scoped list, never total or invented schedu
  const { NurseDashboardView } = getUi();
  const html = render(NurseDashboardView, { list: { scope: "assigned", items: [{ id: patientId, displayName: "API Patient", recordNumber: null, latestCheckIn: null, nextVisit: null }], page: { hasMore: true, nextCursor: "next" } } });
  assert.match(html, /1 pasien dimuat/); assert.match(html, /Masih ada halaman berikutnya/);
- assert.doesNotMatch(html, /Total pasien|Kunjungan hari ini|Risiko tinggi/);
+ assert.match(html, /attention-card/); assert.match(html, /dashboard-grid/);
+ assert.match(html, /requests-card/); assert.match(html, /visits-card/); assert.match(html, /upcoming-card/);
+ assert.equal((html.match(/class="stat"/g) ?? []).length, 4);
+ assert.doesNotMatch(html, /Total pasien|Risiko tinggi|Terjadwal|Selesai<\/span>/);
 });
 test("missing snapshot is not a diagnosis, allergy clearance or invented normal measurement", () => {
  const { SnapshotView } = getUi(); const html = render(SnapshotView, { record: null });
@@ -41,13 +44,19 @@ test("care instructions preserve ordered structured items rather than flattened 
  const { CareGuideView } = getUi(); const html = render(CareGuideView, { guide: { sources: [], orders: [{ id: patientId, instructions: "Original instructions", items: [{ type: "care", text: "First instruction" }, { type: "care", text: "Second instruction" }], revisionNumber: 1, sourceVersion: 1, sourceDocumentId: patientId }] } });
  assert.match(html, /Original instructions/); assert.match(html, /<ol[^>]*><li>First instruction<\/li><li>Second instruction<\/li><\/ol>/);
 });
-test("unbuilt routes render unavailable pages and do not import mock workflow data or mock notFound metadata", async () => {
- for (const path of ["pengajuan-homecare/page.tsx", "pengajuan-homecare/[requestId]/page.tsx", "jadwal-kunjungan/page.tsx", "jadwal-kunjungan/[visitId]/page.tsx", "notifikasi/page.tsx", "pemantauan-risiko/page.tsx"]) {
-  const source = await readFile(new URL(`../app/${path}`, import.meta.url), "utf8");
-  assert.match(source, /UnavailableWorkflow/); assert.doesNotMatch(source, /generateStaticParams|notFound|dashboard-data|visit-data|RiskMonitoringPage/);
- }
- const route = await readFile(new URL("../app/pasien-rekam-medis/[patientId]/page.tsx", import.meta.url), "utf8");
- assert.match(route, /await params/); assert.doesNotMatch(route, /generateStaticParams|patientDirectory|notFound/);
- const header = await readFile(new URL("../components/nurse-header.tsx", import.meta.url), "utf8");
- assert.doesNotMatch(header, /dashboard-data/); assert.match(header, /profile/);
+test("nurse surfaces retain baseline table slots, patient tabs and scoped clinical panels", () => {
+ const { PatientRows } = getUi();
+ const html = render(PatientRows, { patients: [] });
+ for (const heading of ["Usia · JK", "Keluar RS", "Check-in terakhir", "Tingkat risiko", "Kunjungan berikutnya"]) assert.ok(html.includes(heading));
+ const source = readFileSync(new URL("../components/nurse-workspace-pages.tsx", import.meta.url), "utf8");
+ for (const label of ["Profil Pasien", "Riwayat medis", "Penilaian kondisi", "Riwayat perawatan"]) assert.ok(source.includes(label));
+ assert.match(source, /MedicalSnapshotPanel patientId=\{patientId\}/);
+ assert.match(source, /PatientAnalysisPanel patientId=\{patientId\}/);
+ assert.match(source, /PatientClinicalReads key=\{patientId\}/);
+ assert.match(source, /className="patient-checkins-table"/);
+ assert.match(source, /className="risk-monitoring-layout"/);
+ assert.match(source, /className="medical-record-layout"/);
+ assert.match(source, /className="nurse-notifications-main"|nurse-notifications-main/);
+ assert.match(source, /className="nurse-profile-shortcuts"/);
+ assert.doesNotMatch(source, /dashboard-data|useNurseData|signOutDemo/);
 });

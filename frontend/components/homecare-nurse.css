@@ -1,0 +1,95 @@
+.homecare-nurse-main { min-width: 0; }
+.homecare-nurse-main input, .homecare-nurse-main select, .homecare-nurse-main textarea { font: inherit; color: var(--foreground); }
+.homecare-nurse-help { margin: 24px 0 22px; padding: 15px 18px; border: 1px solid #c9ddd6; border-radius: 11px; background: #f4faf7; color: #42675c; }
+.homecare-nurse-help p + p { margin-top: 7px; }
+.homecare-nurse-search-form { display: flex; align-items: center; gap: 10px; }
+.homecare-nurse-search-form .button { min-height: 42px; }
+.homecare-nurse-table td { overflow-wrap: anywhere; }
+.homecare-nurse-table .patient-identity { min-width: 0; }
+.homecare-nurse-table .patient-identity strong { display: block; }
+.homecare-nurse-table .secondary-text { display: block; }
+.homecare-nurse-id { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.homecare-nurse-pagination { margin-top: 18px; }
+.homecare-nurse-pagination .live-feedback { padding-inline: 0; }
+.homecare-nurse-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.homecare-nurse-section-heading p { max-width: 750px; }
+.homecare-nurse-priority { margin-top: 32px; }
+.homecare-nurse-priority-list { display: grid; gap: 0; padding: 0 !important; list-style: none; }
+.homecare-nurse-priority-list > li { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--border); }
+.homecare-nurse-priority-list > li:last-child { border-bottom: 0; }
+.homecare-nurse-priority-list > li > div { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.homecare-nurse-priority-detail { margin-top: 16px; }
+.homecare-nurse-priority-detail > p { margin-block: 14px; }
+.homecare-nurse-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; padding: 20px; }
+.homecare-nurse-fields > div { min-width: 0; }
+.homecare-nurse-fields dt { margin-bottom: 4px; color: #087a65; font-size: 13px; }
+.homecare-nurse-fields dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.homecare-nurse-identity-extra { padding: 0 20px 18px; }
+.homecare-nurse-identity-extra summary { color: var(--secondary); font-size: 13px; cursor: pointer; }
+.homecare-nurse-identity-extra .homecare-nurse-fields { padding: 16px 0 0; }
+.homecare-nurse-main .screening-complaint > div + div { margin-top: 12px; }
+.homecare-nurse-main .request-decision-actions { margin-top: 4px; }
+.homecare-nurse-main .request-decision-actions .button { justify-self: stretch; }
+.homecare-nurse-main .request-decision-body summary { color: var(--secondary); font-size: 13px; cursor: pointer; }
+.homecare-nurse-main .request-status-cancelled, .homecare-nurse-main .request-status-draft { color: var(--secondary); }
+.homecare-nurse-observations { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.homecare-nurse-observations ul { padding-left: 20px; }
+.homecare-nurse-observations li { margin: 8px 0; overflow-wrap: anywhere; }
+.homecare-nurse-form { display: grid; gap: 15px; margin-top: 16px; }
+.homecare-nurse-form > label, .homecare-nurse-inline-form > label, .homecare-nurse-settings-grid > label { display: grid; gap: 7px; color: var(--foreground); font-size: 14px; font-weight: 700; }
+.homecare-nurse-form input, .homecare-nurse-form select, .homecare-nurse-form textarea, .homecare-nurse-settings-grid input { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; border: 1px solid #c6d8d1; border-radius: 9px; background: #fff; }
+.homecare-nurse-form textarea { resize: vertical; }
+.homecare-nurse-form input:disabled, .homecare-nurse-form select:disabled, .homecare-nurse-form textarea:disabled { background: #edf3f0; }
+.homecare-nurse-form .button { justify-self: start; }
+.homecare-nurse-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.homecare-nurse-notice { margin-top: 14px; padding: 13px 15px; border: 1px solid #d6b874; border-radius: 9px; background: #fff9e9; color: #675323; overflow-wrap: anywhere; }
+.homecare-nurse-notice.is-verified { border-color: #b5d6c5; background: #eef8f2; color: #18664d; }
+.homecare-nurse-terminal { overflow-wrap: anywhere; white-space: pre-wrap; }
+.homecare-nurse-card-actions { display: grid; gap: 22px; padding: 0 20px 22px; }
+.homecare-nurse-card-actions .button { justify-self: start; }
+.homecare-nurse-reschedule { padding-top: 18px; border-top: 1px solid var(--border); }
+.homecare-nurse-inline-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 12px; }
+.homecare-nurse-inline-form .button { grid-column: 1 / -1; justify-self: start; }
+.homecare-nurse-slot-picker { padding: 12px 0; }
+.homecare-nurse-slot-list { display: grid; gap: 8px; max-height: 350px; overflow-y: auto; }
+.homecare-nurse-slot-list label { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; padding: 11px; border: 1px solid var(--border); border-radius: 9px; }
+.homecare-nurse-slot-list small { grid-column: 2; overflow-wrap: anywhere; color: var(--secondary); }
+.homecare-nurse-slot-list input { width: auto; min-height: 20px; }
+.homecare-nurse-selection { padding: 10px; border-radius: 8px; background: #edf7f3; overflow-wrap: anywhere; }
+.homecare-nurse-attestation { display: flex !important; grid-template-columns: auto 1fr; flex-direction: row; align-items: flex-start; gap: 10px !important; padding: 12px; border: 1px solid #c6d8d1; border-radius: 9px; background: #f5faf8; font-weight: 400 !important; }
+.homecare-nurse-attestation input { flex: 0 0 auto; width: 20px; min-height: 20px; margin: 0; }
+.homecare-nurse-guide article { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.homecare-nurse-events { padding-left: 20px; }
+.homecare-nurse-events li { margin: 12px 0; overflow-wrap: anywhere; }
+.homecare-nurse-events span, .homecare-nurse-events small { display: block; margin-top: 3px; }
+.homecare-nurse-schedule-list { margin: 0; padding: 0; list-style: none; }
+.homecare-nurse-settings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.homecare-nurse-settings-grid label:nth-child(4), .homecare-nurse-settings-grid label:nth-child(5) { grid-column: span 1; }
+.homecare-nurse-json { font-family: ui-monospace, monospace !important; font-size: 13px !important; tab-size: 2; }
+.homecare-nurse-current-version { margin-top: 20px; }
+.homecare-nurse-current-version summary { cursor: pointer; font-weight: 700; }
+.homecare-nurse-review { padding: 18px; border: 1px solid #99c9b7; border-radius: 11px; background: #f0f9f4; }
+.homecare-nurse-review .button { margin-bottom: 8px; }
+.homecare-nurse-review .homecare-nurse-fields { padding-inline: 0; }
+.button-outline { border-color: #b9d4c8; background: #fff; color: #187a65; }
+.button-outline:hover:not(:disabled) { background: #edf8f3; }
+.homecare-nurse-main button:disabled { cursor: not-allowed; opacity: 0.6; }
+
+@media (max-width: 900px) {
+  .homecare-nurse-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .homecare-nurse-fields { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .homecare-nurse-search-form { flex-direction: column; width: 100%; }
+  .homecare-nurse-search-form .button { align-self: flex-start; }
+  .homecare-nurse-section-heading { flex-direction: column; }
+  .homecare-nurse-priority-list > li { flex-direction: column; align-items: stretch; }
+  .homecare-nurse-priority-list .button { align-self: flex-start; }
+}
+@media (max-width: 430px) {
+  .homecare-nurse-main .homecare-nurse-fields { padding: 16px; gap: 13px; }
+  .homecare-nurse-main .homecare-nurse-settings-grid, .homecare-nurse-main .homecare-nurse-inline-form { grid-template-columns: minmax(0, 1fr); }
+  .homecare-nurse-main .homecare-nurse-form .button, .homecare-nurse-main .homecare-nurse-section-heading .button, .homecare-nurse-main .homecare-nurse-actions .button { width: 100%; white-space: normal; }
+  .homecare-nurse-main .homecare-nurse-json { font-size: 12px !important; }
+  .homecare-nurse-main .homecare-nurse-slot-list { max-height: 300px; }
+}

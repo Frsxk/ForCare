@@ -12,5 +12,24 @@
 .live-card details { padding-block: 12px; border-top: 1px solid var(--border); }
 .live-card summary { cursor: pointer; font-weight: 700; }
 .live-patients-table { min-width: 720px; }
+.patient-directory-scroll { position: relative; }
 .live-session-actions { max-width: 1200px; margin: 0 auto; padding: 20px 24px 40px; display: flex; justify-content: flex-end; gap: 16px; align-items: center; }
 @media (max-width: 700px) { .live-two-column { grid-template-columns: 1fr; } .live-card { padding: 18px; } }
+.nurse-unavailable-value { font-size: 16px; line-height: 24px; overflow-wrap: anywhere; }
+.nurse-profile-session .live-session-actions { display: block; padding: 0; margin: 16px 0 0; }
+.nurse-profile-session .live-session-actions > button { width: 100%; min-height: 44px; border: 0; background: #df5962; color: white; }
+.nurse-profile-session .live-session-actions > button:hover { background: #c94a54; }
+.nurse-notification-option:has(input:disabled) { cursor: not-allowed; }
+.patient-risk-filter:disabled { cursor: not-allowed; opacity: .65; }
+.risk-search-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.patient-checkins-table .live-prewrap { white-space: pre-wrap; min-width: 180px; }
+.patient-reference-block .live-two-column { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.patient-record-panel [hidden] { display: none; }
+.nurse-profile-sidebar { min-width: 0; }
+.visit-record-main label.medical-field { display: grid; gap: 6px; font-size: 14px; font-weight: 700; }
+.visit-record-main label.medical-field .medical-control { font-weight: 400; }
+.visit-record-main :disabled { cursor: not-allowed; }
+@media (max-width: 580px) {
+  .nurse-unavailable-value { font-size: 14px; line-height: 21px; }
+  .risk-search-header .risk-monitoring-search { width: 100%; }
+}

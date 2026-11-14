@@ -1,5 +1,8 @@
-import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
+import { LiveHomecareNurseRequestDetail } from "@/components/homecare-nurse";
 
 export const metadata = { title: "Detail pengajuan homecare | ForCare" };
 
-export default function Page() { return <UnavailableWorkflow title="Detail pengajuan homecare" activePage="requests" />; }
+export default async function Page({ params, searchParams }: { params: Promise<{ requestId: string }>; searchParams: Promise<{ prioritas?: string }> }) {
+  const [{ requestId }, { prioritas }] = await Promise.all([params, searchParams]);
+  return <LiveHomecareNurseRequestDetail key={requestId} requestId={requestId} priorityId={prioritas ?? null} />;
+}

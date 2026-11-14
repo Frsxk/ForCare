@@ -1,5 +1,5 @@
-import { UnavailableWorkflow } from "@/components/nurse-workspace-pages";
+import { LiveHomecareNurseSchedule } from "@/components/homecare-nurse";
 
 export const metadata = { title: "Jadwal Kunjungan | ForCare" };
 
-export default function Page() { return <UnavailableWorkflow title="Jadwal Kunjungan" activePage="visits" />; }
+export default function Page() { return <LiveHomecareNurseSchedule />; }

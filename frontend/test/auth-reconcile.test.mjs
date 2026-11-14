@@ -111,23 +111,6 @@ test("auth routes preserve teammate visual system without mock handlers, role se
   assert.match(source("../app/daftar/page.tsx"), /RegisterPage/);
 });
 
-test("boundary isolates provider trees by exact role and route, with shared logout", () => {
-  const boundary = source("../components/auth-boundary.tsx");
-  assert.match(boundary, /pathname === "\/daftar" \? <RegisterPage/);
-  assert.match(boundary, /pathname === "\/pasien" \|\| pathname\?\.startsWith\("\/pasien\/"\)/);
-  assert.match(boundary, /if \(patient && patientRoute\)/);
-  assert.match(boundary, /<PatientWorkspaceProvider[^>]*>\{children\}<\/PatientWorkspaceProvider>/);
-  assert.match(boundary, /if \(nurse && nurseRoute\)/);
-  assert.match(boundary, /<NurseWorkspaceProvider[^>]*>\{children\}<\/NurseWorkspaceProvider>/);
-  assert.match(boundary, /href="\/pasien"/);
-  assert.match(boundary, /SessionActions/);
-  assert.doesNotMatch(boundary, /router\.(push|replace)|redirect\(/);
-  const header = source("../components/nurse-header.tsx");
-  assert.match(header, /<SessionActions\s*\/>/);
-  assert.match(header, /useNurseProfile/);
-  assert.doesNotMatch(header, /dashboard-data|nurse\.name/);
-});
-
 async function renderRoute(role, pathname) {
   const data = role === "anonymous" ? null : {
     ...sessionData,

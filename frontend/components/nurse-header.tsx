@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { useNurseProfile } from "@/components/nurse-workspace-provider";
 import { Avatar } from "@/components/patient-identity";
-import { SessionActions } from "@/components/session-actions";
 export function NurseHeader({
   activePage,
 }: {
@@ -31,7 +30,7 @@ export function NurseHeader({
               setMenuOpen(false);
             }}
           >
-            <Image src="/images/forcare-brand.png" alt="ForCare" width={145} height={46} priority />
+            <Image src="/images/forcare-brand.png" alt="ForCare" width={215} height={68} priority />
           </Link>
 
           <nav
@@ -71,7 +70,6 @@ export function NurseHeader({
           </nav>
 
           <div className="header-actions">
-            <SessionActions />
             <Link
               href="/notifikasi"
               className={`notification-button${activePage === "notifications" ? " is-active" : ""}`}
