@@ -163,15 +163,7 @@ integration("owned patient profile and scope integration", () => {
     );
     // The disposable database applies every approved migration, so later
     // approved slices legitimately exist here (T08 monitoring included).
-    // These future patient-operation tables still do not.
     expect(tables).toContain("check_in_observations");
-    for (const laterSlice of [
-      "visits",
-      "bookings",
-      "notifications",
-    ]) {
-      expect(tables).not.toContain(laterSlice);
-    }
 
     const columns = (await db.sql`
       SELECT table_name, column_name, data_type, is_nullable

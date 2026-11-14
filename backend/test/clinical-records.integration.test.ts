@@ -5,6 +5,7 @@ import { createOperatorAssignmentService } from "../src/patients/operator-servic
 import { provisionNurseInTransaction } from "../src/staff/provisioning";
 import { createDisposableDatabase, type DisposableDatabase } from "./fixtures/disposable-database";
 import { cookieFrom, createTestApp, jsonRequest, request } from "./fixtures/test-app";
+import { createSchedulingGrant } from "./fixtures/scheduling-grants";
 
 const configured = Boolean(process.env.FORCARE_TEST_DATABASE_URL?.trim());
 const integration = configured ? describe : describe.skip;
@@ -206,14 +207,18 @@ integration("T07 patient-bound clinical records", () => {
     const intake = await setupNurse("Scope Intake", "scope.intake@nurse.invalid", "NUR-CL-SCOPE-3");
     const visit = await setupNurse("Scope Visit", "scope.visit@nurse.invalid", "NUR-CL-SCOPE-4");
     await assignPrimary(patient, primary, 0);
-    await db.sql`
-      INSERT INTO public.patient_access_grants (staff_id, patient_id, basis, source_booking_id)
-      VALUES (${intake.staffId}, ${patient.patientId}, 'request_intake', ${randomUUID()})
-    `;
-    await db.sql`
-      INSERT INTO public.patient_access_grants (staff_id, patient_id, basis, source_visit_id)
-      VALUES (${visit.staffId}, ${patient.patientId}, 'visit', ${randomUUID()})
-    `;
+    await createSchedulingGrant(db.sql, {
+      patientId: patient.patientId,
+      patientAccountId: patient.accountId,
+      nurseId: intake.staffId,
+      nurseAccountId: intake.accountId,
+    }, "request_intake");
+    await createSchedulingGrant(db.sql, {
+      patientId: patient.patientId,
+      patientAccountId: patient.accountId,
+      nurseId: visit.staffId,
+      nurseAccountId: visit.accountId,
+    }, "visit");
 
     const createdBody = await expectStatus(await createSnapshot(app, primary, patient.patientId), 201);
     const rawSource = await expectStatus(

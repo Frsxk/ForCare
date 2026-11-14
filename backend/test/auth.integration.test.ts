@@ -9,6 +9,7 @@ import {
   type DisposableDatabase,
 } from "./fixtures/disposable-database";
 import { cookieFrom, createTestApp, jsonRequest, request, TEST_ORIGIN } from "./fixtures/test-app";
+import { createSchedulingGrant } from "./fixtures/scheduling-grants";
 
 const configured = Boolean(process.env.FORCARE_TEST_DATABASE_URL?.trim());
 const integration = configured ? describe : describe.skip;
@@ -285,26 +286,31 @@ integration("identity and session integration", () => {
     const expired = await provision("expired@nurse.invalid", "NUR-GRANT-EXPIRED");
     const revoked = await provision("revoked@nurse.invalid", "NUR-GRANT-REVOKED");
 
-    await db.sql`
-      INSERT INTO public.patient_access_grants (staff_id, patient_id, basis, source_booking_id)
-      VALUES (${intake.staffId}, ${patientId}, 'request_intake', ${randomUUID()})
-    `;
-    await db.sql`
-      INSERT INTO public.patient_access_grants (staff_id, patient_id, basis, source_visit_id)
-      VALUES (${visit.staffId}, ${patientId}, 'visit', ${randomUUID()})
-    `;
+    const patientAccount = await db.sql`
+      SELECT account_id FROM public.patients WHERE id = ${patientId}
+    ` as unknown as Array<{ account_id: string }>;
+    await createSchedulingGrant(db.sql, {
+      patientId,
+      patientAccountId: patientAccount[0].account_id,
+      nurseId: intake.staffId,
+      nurseAccountId: intake.accountId,
+    }, "request_intake", { keepIntakeActive: true });
+    const activeVisit = await createSchedulingGrant(db.sql, {
+      patientId,
+      patientAccountId: patientAccount[0].account_id,
+      nurseId: visit.staffId,
+      nurseAccountId: visit.accountId,
+    }, "visit");
     await db.sql`
       INSERT INTO public.patient_access_grants (staff_id, patient_id, basis)
       VALUES (${primary.staffId}, ${patientId}, 'primary')
     `;
-    await db.sql`
-      INSERT INTO public.patient_access_grants (
-        staff_id, patient_id, basis, source_visit_id, granted_at, expires_at
-      ) VALUES (
-        ${expired.staffId}, ${patientId}, 'visit', ${randomUUID()},
-        now() - interval '2 days', now() - interval '1 hour'
-      )
-    `;
+    await createSchedulingGrant(db.sql, {
+      patientId,
+      patientAccountId: patientAccount[0].account_id,
+      nurseId: expired.staffId,
+      nurseAccountId: expired.accountId,
+    }, "visit", { expired: true });
     const revokedGrant = (await db.sql`
       INSERT INTO public.patient_access_grants (staff_id, patient_id, basis)
       VALUES (${revoked.staffId}, ${patientId}, 'primary')
@@ -326,15 +332,15 @@ integration("identity and session integration", () => {
       return { cookie: cookieFrom(response), csrf: body.data.session.csrfToken, data: body.data };
     };
 
-    for (const [email, scopes, basis] of [
-      ["intake@nurse.invalid", expected.intake, "request_intake"],
-      ["visit@nurse.invalid", expected.visit, "visit"],
-      ["primary@nurse.invalid", expected.primary, "primary"],
+    for (const [email, scopes, basis, expiresAt] of [
+      ["intake@nurse.invalid", expected.intake, "request_intake", null],
+      ["visit@nurse.invalid", expected.visit, "visit", activeVisit.expiresAt],
+      ["primary@nurse.invalid", expected.primary, "primary", null],
     ] as const) {
       const loggedIn = await signIn(email);
       expect(loggedIn.data.access.scopes).toEqual([...scopes]);
       expect(loggedIn.data.access.accessContexts).toEqual([
-        { basis, patientId, expiresAt: null },
+        { basis, patientId, expiresAt },
       ]);
       expect(loggedIn.data.access.scopes).not.toContain(basis === "primary" ? "nurse:request_intake" : "nurse:assigned");
 
@@ -350,7 +356,7 @@ integration("identity and session integration", () => {
       expect(access.status).toBe(200);
       expect(((await access.json()) as any).data).toEqual({
         scopes: [...scopes],
-        accessContexts: [{ basis, patientId, expiresAt: null }],
+        accessContexts: [{ basis, patientId, expiresAt }],
       });
     }
 
