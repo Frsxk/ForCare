@@ -27,6 +27,9 @@ function fixture(role = "patient") {
  return { controller, writes, setLogout: fn => logout = fn, setRead: fn => read = fn, switchAccount: () => session = { ...session, account: { ...session.account, id }, session: { ...session.session, csrfToken: "other" } } };
 }
 async function patient(f) { await f.controller.refresh(); const w = getPatientWorkspace(f.controller); await w.profile.load(w.api.profile); return w; }
+function formValues(html) {
+ return Array.from(html.matchAll(/<input\b[^>]*\bvalue="([^"]*)"[^>]*>|<textarea\b[^>]*>([\s\S]*?)<\/textarea>/g), match => match[1] ?? match[2]);
+}
 test("temporary boundary detach retains exact patient intent and forbids replacement", async () => {
  const f = fixture(), workspace = await patient(f), disconnect = workspace.scope.connect(), writer = workspace.writer(id), operation = prepareCheckIn(id, input);
  await writer.send(operation); disconnect();
@@ -79,12 +82,17 @@ test("role-specific stores cannot be accessed by the other role", async () => {
  const n = fixture("nurse"); await n.controller.refresh(); assert.throws(() => getPatientWorkspace(n.controller));
 });
 test("contact recovery from shared writer updates cache and returned form without reversing contacts", async () => {
- const f = fixture(), workspace = await patient(f), writer = workspace.writer(id), next = { ...profile, phone: "08129998888", addressLine: "Recovered address", version: 1 };
- const operation = preparePatientContact(profile, next); await writer.send(operation);
- let html = renderToStaticMarkup(createElement(ContactEditor, { profile, writer, reload: () => {} })); assert.match(html, /value="08129998888"/);
+ const f = fixture(), previous = { ...profile, addressLine: "Old address" };
+ f.setRead(() => ok(previous));
+ const workspace = await patient(f), writer = workspace.writer(id), next = { ...previous, phone: "08129998888", addressLine: "Recovered address", version: 1 };
+ const operation = preparePatientContact(previous, next); await writer.send(operation);
+ let html = renderToStaticMarkup(createElement(ContactEditor, { profile: previous, writer, reload: () => {} }));
+ assert.ok(formValues(html).includes(next.phone)); assert.ok(formValues(html).includes(next.addressLine));
  f.setRead(() => ok(next)); await writer.reconcile();
  assert.deepEqual(workspace.profile.getSnapshot(), { status: "ready", data: next });
  html = renderToStaticMarkup(createElement(ContactEditor, { profile: workspace.profile.getSnapshot().data, writer, reload: () => {} }));
- assert.match(html, /value="08129998888"/); assert.match(html, /value="Recovered address"/); assert.doesNotMatch(html, /value="08123456789"/);
+ const values = formValues(html);
+ assert.ok(values.includes(next.phone)); assert.ok(values.includes(next.addressLine));
+ assert.ok(!values.includes(previous.phone)); assert.ok(!values.includes(previous.addressLine));
  assert.match(html, /disabled=""[^>]*>Simpan kontak/); assert.equal(f.writes.length, 1);
 });
