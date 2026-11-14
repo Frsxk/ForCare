@@ -75,13 +75,13 @@ function scripted(steps: Array<unknown | Error>) {
 
 describe("Gemini draft model", () => {
   test("uses the exact primary model and returns string-only provenance", async () => {
-    expect(GEMINI_PRIMARY_MODEL_ID).toBe("gemini-4-hydrogen");
+    expect(GEMINI_PRIMARY_MODEL_ID).toBe("gemini-3.5-flash");
     expect(GEMINI_FALLBACK_MODEL_ID).toBe("gemini-3.5-flash-lite");
     const fake = scripted([{ content: "draft", additional_kwargs: { private: secret } }]);
     expect(await createGeminiDraftModel(config, fake.factory).invoke(messages)).toEqual({
-      content: "draft", modelId: "gemini-4-hydrogen", provider: "google-ai-studio", usedFallback: false,
+      content: "draft", modelId: "gemini-3.5-flash", provider: "google-ai-studio", usedFallback: false,
     });
-    expect(fake.calls).toEqual(["gemini-4-hydrogen"]);
+    expect(fake.calls).toEqual(["gemini-3.5-flash"]);
   });
 
   test("pins Google chat-completions transport, low effort and bounded SDK settings", async () => {
@@ -113,20 +113,20 @@ describe("Gemini draft model", () => {
     expect(await createGeminiDraftModel(config, fake.factory).invoke(messages)).toEqual({
       content: "fallback draft", modelId: "gemini-3.5-flash-lite", provider: "google-ai-studio", usedFallback: true,
     });
-    expect(fake.calls).toEqual(["gemini-4-hydrogen", "gemini-3.5-flash-lite"]);
+    expect(fake.calls).toEqual(["gemini-3.5-flash", "gemini-3.5-flash-lite"]);
   });
 
   test("fallback failure is sanitized and never makes a third attempt", async () => {
     const fake = scripted([httpError(429), httpError(429), { content: "must not run" }]);
     await failure(createGeminiDraftModel(config, fake.factory).invoke(messages), "rate_limited");
-    expect(fake.calls).toEqual(["gemini-4-hydrogen", "gemini-3.5-flash-lite"]);
+    expect(fake.calls).toEqual(["gemini-3.5-flash", "gemini-3.5-flash-lite"]);
   });
 
   for (const [status, code] of [[401, "authentication"], [403, "authentication"], [400, "invalid_request"], [500, "provider_error"]] as const) {
     test(`HTTP ${status} fails without retry or fallback`, async () => {
       const fake = scripted([httpError(status)]);
       await failure(createGeminiDraftModel(config, fake.factory).invoke(messages), code);
-      expect(fake.calls).toEqual(["gemini-4-hydrogen"]);
+      expect(fake.calls).toEqual(["gemini-3.5-flash"]);
     });
   }
 

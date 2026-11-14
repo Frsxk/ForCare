@@ -1,7 +1,7 @@
 import type { BaseMessageLike } from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
 
-export const GEMINI_PRIMARY_MODEL_ID = "gemini-4-hydrogen";
+export const GEMINI_PRIMARY_MODEL_ID = "gemini-3.5-flash";
 export const GEMINI_FALLBACK_MODEL_ID = "gemini-3.5-flash-lite";
 const GOOGLE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
 const MAX_TIMEOUT_MS = 120_000;
