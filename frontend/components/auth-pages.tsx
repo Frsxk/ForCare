@@ -6,11 +6,12 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import { asApiError, type ApiError } from "@/lib/api/client";
 import type { RegistrationInput } from "@/lib/api/contracts";
 import { useSession } from "@/components/session-provider";
+import { AuthBrandWordmark } from "./auth-brand-wordmark";
 import "./auth-pages.css";
 
 function BrandArtwork() {
   return <aside className="auth-art-panel">
-    <Link href="/login" className="auth-brand" aria-label="ForCare"><Image src="/images/forcare-brand.png" alt="ForCare" width={215} height={68} priority /></Link>
+    <AuthBrandWordmark/>
     <div className="auth-illustration"><Image src="/images/forcare-logo.png" alt="" width={400} height={437} priority /></div>
     <div className="auth-art-copy"><h2>Perawatan lanjutan,<br/>tetap hangat di rumah.</h2><p>Hubungkan pasien dan perawat setelah keluar dari rumah sakit.</p></div>
   </aside>;

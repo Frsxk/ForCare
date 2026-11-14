@@ -87,7 +87,9 @@ test("auth routes preserve teammate visual system without mock handlers, role se
   assert.match(forms, /controller\.register\(/);
   assert.match(forms, /name="fullName"/);
   for (const gender of ["male", "female", "other", "undisclosed"]) assert.ok(forms.includes(`value="${gender}"`));
-  assert.match(forms, /\/images\/forcare-brand\.png/);
+  assert.match(forms, /auth-brand-wordmark/);
+  assert.match(source("../components/auth-brand-wordmark.tsx"), /auth-brand-wordmark-for/);
+  assert.match(source("../components/auth-brand-wordmark.tsx"), /auth-brand-wordmark-care/);
   assert.match(forms, /\/images\/forcare-logo\.png/);
   assert.doesNotMatch(forms, /backend tersedia|name="role"|localStorage|sessionStorage|console\./);
   assert.match(forms, /password\.value = ""/);
