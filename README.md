@@ -20,6 +20,7 @@ A web application for coordinating patient follow-up, daily check-ins, homecare 
 - **Subtheme:** Inclusive Health & Well-being
 - **Live application:** [forcare.trackover.web.id](https://forcare.trackover.web.id/)
 - **Source code:** [Frsxk/ForCare](https://github.com/Frsxk/ForCare), containing both frontend and backend
+- **Pitch deck:** [Canva](https://canva.link/pm5fv1bbp0vesr6)
 
 **Problem addressed:** Patients receiving care at home need a structured way to report their condition, access care instructions, and request nursing visits. Nurses and care providers need to distinguish patient reports from confirmed observations, track scheduling decisions, and keep care information tied to the appropriate patient and responsible nurse.
 
