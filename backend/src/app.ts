@@ -13,6 +13,10 @@ import { createRateLimiters, type RateLimiters } from "./http/rate-limit";
 import { assertAllowedOrigin } from "./http/request";
 import { patientRoutes } from "./patients/routes";
 import type { PatientService } from "./patients/service";
+import { analysisRoutes } from "./analysis/routes";
+import type { AnalysisService } from "./analysis/service";
+import { knowledgeRoutes } from "./knowledge/routes";
+import type { KnowledgeService } from "./knowledge/service";
 
 export type AppServices = {
   auth?: AuthService;
@@ -20,6 +24,8 @@ export type AppServices = {
   clinical?: ClinicalService;
   checkins?: CheckInService;
   assessments?: AssessmentService;
+  analysis?: AnalysisService;
+  knowledge?: KnowledgeService;
   config?: AuthConfig;
   rateLimiters?: RateLimiters;
   getClientIp?: ClientIpResolver;
@@ -99,6 +105,17 @@ export function createApp(checkDatabase: () => Promise<void>, services: AppServi
         getClientIp: services.getClientIp,
       }),
     );
+  }
+  if (services.auth && services.knowledge && services.config) {
+    app.use(knowledgeRoutes({
+      auth: services.auth, knowledge: services.knowledge, config: services.config, rateLimiters,
+    }));
+  }
+  if (services.auth && services.analysis && services.config) {
+    app.use(analysisRoutes({
+      auth: services.auth, analysis: services.analysis, config: services.config,
+      rateLimiters, getClientIp: services.getClientIp,
+    }));
   }
 
   return app;

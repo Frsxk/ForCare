@@ -1,7 +1,7 @@
 import { readTestDatabaseTarget, type TestDatabaseTarget } from "../test/fixtures/test-database-target";
 
 /**
- * Runs the Stop 1 integration suites only against an explicit, disposable
+ * Runs backend integration suites only against an explicit, disposable
  * loopback `_test` database. Without that opt-in this exits nonzero instead of
  * reporting a suite that silently ran no tests.
  */
@@ -16,7 +16,7 @@ function requiredTarget(): TestDatabaseTarget {
 }
 
 const target = requiredTarget();
-console.log(`Running Stop 1 integration tests against ${target.endpoint}/${target.database}`);
+console.log(`Running backend integration tests against ${target.endpoint}/${target.database}`);
 
 const child = Bun.spawn(
   [
@@ -29,6 +29,10 @@ const child = Bun.spawn(
     "test/checkins.integration.test.ts",
     "test/monitoring-contract.integration.test.ts",
     "test/assessments.integration.test.ts",
+    "test/knowledge-service.integration.test.ts",
+    "test/knowledge-import.integration.test.ts",
+    "test/knowledge-isolation.integration.test.ts",
+    "test/analysis-pipeline.integration.test.ts",
   ],
   {
     cwd: new URL("..", import.meta.url).pathname,

@@ -10,6 +10,7 @@
     "migrate": "bun run scripts/migrate.ts",
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
+    "worker:analysis": "bun run src/analysis-worker.ts",
     "typecheck": "tsc --noEmit",
     "ai:smoke": "bun run scripts/ai-smoke.ts"
   },
@@ -20,6 +21,7 @@
     "@langchain/openai": "1.8.4",
     "elysia": "1.4.32",
     "langchain": "1.6.5",
+    "pg": "8.23.1",
     "zod": "4.6.7"
   },
   "devDependencies": {
