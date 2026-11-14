@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PatientLiveShell, PatientUnavailable, PatientLivePage, PatientGuideSections, patientGuideSections, PatientNotificationList } from "../components/patient-live-pages";
+import { PatientLiveShell, PatientUnavailable, PatientLivePage, PatientGuideSections, patientGuideSections, PatientNotificationList, CheckInDetails } from "../components/patient-live-pages";
 import { SessionProvider } from "../components/session-provider";
 import { PatientWorkspaceProvider } from "../components/patient-workspace-provider";
 import { SessionController } from "../lib/api/session";
@@ -19,6 +19,17 @@ test("live shell uses server patient identity with responsive teammate classes a
  assert.match(html, /Nama Aman Server/); assert.match(html, /RM-SERVER/); assert.match(html, /LIVE_CHILD/); assert.match(html, /patient-header-inner/); assert.match(html, /patient-nav/); assert.match(html, /aria-label="Buka menu"/); assert.match(html, /href="\/pasien\/check-in"/); assert.match(html, /aria-current="page"/);
  assert.doesNotMatch(html, /Ilham|Dinda|HC-0014|Obat A|internalNote|inputSnapshot|risiko tinggi/);
  assert.match(html, /images%2Fforcare-brand.png|\/images\/forcare-brand.png/);
+});
+test("latest check-in summary omits free-text notes without hiding saved-draft review", () => {
+ const checkIn = { localDate: "2026-11-14", status: "submitted", condition: "complaint", medicationAdherence: "regular", observations: [], note: "Catatan sintetis untuk rincian check-in." };
+ const summary = renderToStaticMarkup(createElement(CheckInDetails, { checkIn, showNote: false }));
+ assert.ok(!summary.includes(checkIn.note));
+ assert.match(summary, /Terkirim/);
+ assert.match(summary, /Ada keluhan/);
+ assert.match(summary, /Teratur/);
+ const review = renderToStaticMarkup(createElement(CheckInDetails, { checkIn: { ...checkIn, status: "draft" } }));
+ assert.ok(review.includes(checkIn.note));
+ assert.match(review, /Draf/);
 });
 for (const section of ["homecare", "booking", "notifications"]) test(`${section} is explicitly unavailable with no fake saves or editable fixtures`, () => {
  const html = renderToStaticMarkup(createElement(PatientUnavailable, { section })); assert.match(html, /belum tersedia/);
