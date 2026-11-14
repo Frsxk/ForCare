@@ -15,15 +15,79 @@ async function draft() {
   return { corpusId: c.id as string, documentId: d.id as string, chunkId: k.id as string };
 }
 async function approveDocument(sql: SQL, documentId: string) {
-  await sql`UPDATE knowledge_documents SET status = 'approved', approved_by = ${staffId}, approved_at = now() WHERE id = ${documentId}`;
+  return sql`UPDATE knowledge_documents SET status = 'approved', approved_by = ${staffId}, approved_at = now() WHERE id = ${documentId}`;
 }
 async function approveCorpus(sql: SQL, corpusId: string) {
-  await sql`UPDATE knowledge_corpora SET status = 'approved', approved_by = ${staffId}, approved_at = now() WHERE id = ${corpusId}`;
+  return sql`UPDATE knowledge_corpora SET status = 'approved', approved_by = ${staffId}, approved_at = now() WHERE id = ${corpusId}`;
 }
-function gate() {
-  let open!: () => void;
-  const promise = new Promise<void>((resolve) => { open = resolve; });
-  return { open, promise };
+
+async function waitForDatabaseBlock(
+  observer: SQL,
+  contenderPid: number,
+  holderPid: number,
+  contenderSettled: () => boolean,
+) {
+  for (;;) {
+    const [activity] = await observer`
+      SELECT state, wait_event_type, ${holderPid} = ANY (pg_blocking_pids(pid)) AS blocked_by_holder
+      FROM pg_stat_activity WHERE pid = ${contenderPid}
+    `;
+    if (activity?.blocked_by_holder) {
+      expect(activity).toMatchObject({ state: "active", wait_event_type: "Lock", blocked_by_holder: true });
+      return;
+    }
+    if (contenderSettled()) throw new Error("contender finished without blocking on the holder");
+  }
+}
+
+async function runContendedStatements(
+  hold: (sql: SQL) => unknown,
+  contend: (sql: SQL) => unknown,
+  expectedErrno?: string,
+) {
+  const holder = await db.sql.reserve();
+  let contender: typeof holder | undefined;
+  let observer: typeof holder | undefined;
+  let holderTransaction = false;
+  let outcome: Promise<unknown> | undefined;
+  try {
+    contender = await db.sql.reserve();
+    observer = await db.sql.reserve();
+    const [{ pid: holderPid }] = await holder`SELECT pg_backend_pid() AS pid`;
+    const [{ pid: contenderPid }] = await contender`SELECT pg_backend_pid() AS pid`;
+    await holder`BEGIN`;
+    holderTransaction = true;
+    await hold(holder);
+
+    // Materialize every thenable before expect() so no lazy Bun Query enters it.
+    outcome = Promise.resolve(contend(contender));
+    let contenderSettled = false;
+    void outcome.then(
+      () => { contenderSettled = true; },
+      () => { contenderSettled = true; },
+    );
+    await waitForDatabaseBlock(observer, contenderPid, holderPid, () => contenderSettled);
+    await holder`COMMIT`;
+    holderTransaction = false;
+    if (expectedErrno === undefined) {
+      await outcome;
+    } else {
+      await expect(outcome).rejects.toMatchObject({ errno: expectedErrno });
+    }
+    outcome = undefined;
+  } finally {
+    try {
+      if (holderTransaction) {
+        await holder`ROLLBACK`;
+        holderTransaction = false;
+      }
+      // Keep the rejection observed without waiting on it during cleanup; an
+      // external lock holder could otherwise keep this reservation occupied.
+      if (outcome) void outcome.catch(() => {});
+    } finally {
+      await Promise.all([holder.release(), contender?.release(), observer?.release()]);
+    }
+  }
 }
 
 integration("knowledge mutation isolation (real PostgreSQL)", () => {
@@ -74,66 +138,66 @@ integration("knowledge mutation isolation (real PostgreSQL)", () => {
   test("READ COMMITTED: inserted draft membership prevents corpus approval; approved corpus rejects insertion", async () => {
     const ids = await draft();
     await approveDocument(db.sql, ids.documentId);
-    const locked = gate(); const release = gate();
-    const inserting = db.sql.begin(async (tx) => {
-      await tx`INSERT INTO knowledge_documents (corpus_id, title, version, body, checksum) VALUES (${ids.corpusId}, 'New draft', 1, 'Synthetic', ${"b".repeat(64)})`;
-      locked.open(); await release.promise;
-    }).then((value) => value);
-    await locked.promise;
-    const approval = approveCorpus(db.sql, ids.corpusId);
-    const rejected = () => expect(approval).rejects.toMatchObject({ errno: "23514" });
-    release.open(); await inserting; await rejected();
+    await runContendedStatements(
+      (sql) => sql`INSERT INTO knowledge_documents (corpus_id, title, version, body, checksum) VALUES (${ids.corpusId}, 'New draft', 1, 'Synthetic', ${"b".repeat(64)})`,
+      (sql) => approveCorpus(sql, ids.corpusId),
+      "23514",
+    );
+    let [corpus] = await db.sql`SELECT status FROM knowledge_corpora WHERE id = ${ids.corpusId}`;
+    expect(corpus.status).toBe("draft");
+    expect((await db.sql`SELECT id FROM knowledge_documents WHERE corpus_id = ${ids.corpusId}`).length).toBe(2);
 
-    const other = await draft(); await approveDocument(db.sql, other.documentId);
-    const approved = gate(); const commit = gate();
-    const approving = db.sql.begin(async (tx) => { await approveCorpus(tx, other.corpusId); approved.open(); await commit.promise; }).then((value) => value);
-    await approved.promise;
-    const insert = db.sql`INSERT INTO knowledge_documents (corpus_id, title, version, body, checksum) VALUES (${other.corpusId}, 'Late', 1, 'Synthetic', ${"c".repeat(64)})`;
-    const pending = Promise.resolve(insert);
-    const denied = () => expect(pending).rejects.toMatchObject({ errno: "55000" });
-    commit.open(); await approving; await denied();
+    const other = await draft();
+    await approveDocument(db.sql, other.documentId);
+    await runContendedStatements(
+      (sql) => approveCorpus(sql, other.corpusId),
+      (sql) => sql`INSERT INTO knowledge_documents (corpus_id, title, version, body, checksum) VALUES (${other.corpusId}, 'Late', 1, 'Synthetic', ${"c".repeat(64)})`,
+      "55000",
+    );
+    [corpus] = await db.sql`SELECT status FROM knowledge_corpora WHERE id = ${other.corpusId}`;
+    expect(corpus.status).toBe("approved");
+    expect((await db.sql`SELECT id FROM knowledge_documents WHERE corpus_id = ${other.corpusId}`).length).toBe(1);
   }, 30_000);
 
   test("READ COMMITTED: chunk insert and document approval serialize in both orders", async () => {
-    const ids = await draft(); const locked = gate(); const release = gate();
-    const inserting = db.sql.begin(async (tx) => {
-      await tx`INSERT INTO knowledge_chunks (document_id, ordinal, content) VALUES (${ids.documentId}, 1, 'Synthetic second')`;
-      locked.open(); await release.promise;
-    }).then((value) => value);
-    await locked.promise;
-    const approval = approveDocument(db.sql, ids.documentId);
-    const done = Promise.resolve(approval);
-    release.open(); await inserting; await done;
+    const ids = await draft();
+    await runContendedStatements(
+      (sql) => sql`INSERT INTO knowledge_chunks (document_id, ordinal, content) VALUES (${ids.documentId}, 1, 'Synthetic second')`,
+      (sql) => approveDocument(sql, ids.documentId),
+    );
     expect((await db.sql`SELECT id FROM knowledge_chunks WHERE document_id = ${ids.documentId}`).length).toBe(2);
+    expect((await db.sql`SELECT status FROM knowledge_documents WHERE id = ${ids.documentId}`)[0].status).toBe("approved");
 
-    const other = await draft(); const approved = gate(); const commit = gate();
-    const approving = db.sql.begin(async (tx) => { await approveDocument(tx, other.documentId); approved.open(); await commit.promise; }).then((value) => value);
-    await approved.promise;
-    const insert = db.sql`INSERT INTO knowledge_chunks (document_id, ordinal, content) VALUES (${other.documentId}, 1, 'Late')`;
-    const pending = Promise.resolve(insert);
-    const denied = () => expect(pending).rejects.toMatchObject({ errno: "55000" });
-    commit.open(); await approving; await denied();
+    const other = await draft();
+    await runContendedStatements(
+      (sql) => approveDocument(sql, other.documentId),
+      (sql) => sql`INSERT INTO knowledge_chunks (document_id, ordinal, content) VALUES (${other.documentId}, 1, 'Late')`,
+      "55000",
+    );
+    expect((await db.sql`SELECT id FROM knowledge_chunks WHERE document_id = ${other.documentId}`).length).toBe(1);
+    expect((await db.sql`SELECT status FROM knowledge_documents WHERE id = ${other.documentId}`)[0].status).toBe("approved");
   }, 30_000);
 
   test("READ COMMITTED: document retirement and corpus approval serialize in both orders", async () => {
-    const ids = await draft(); await approveDocument(db.sql, ids.documentId);
-    const locked = gate(); const release = gate();
-    const retiring = db.sql.begin(async (tx) => {
-      await tx`UPDATE knowledge_documents SET status = 'retired' WHERE id = ${ids.documentId}`;
-      locked.open(); await release.promise;
-    }).then((value) => value);
-    await locked.promise;
-    const pending = approveCorpus(db.sql, ids.corpusId);
-    const denied = () => expect(pending).rejects.toMatchObject({ errno: "23514" });
-    release.open(); await retiring; await denied();
+    const ids = await draft();
+    await approveDocument(db.sql, ids.documentId);
+    await runContendedStatements(
+      (sql) => sql`UPDATE knowledge_documents SET status = 'retired' WHERE id = ${ids.documentId}`,
+      (sql) => approveCorpus(sql, ids.corpusId),
+      "23514",
+    );
+    let [corpus] = await db.sql`SELECT status FROM knowledge_corpora WHERE id = ${ids.corpusId}`;
+    expect(corpus.status).toBe("draft");
+    expect((await db.sql`SELECT status FROM knowledge_documents WHERE id = ${ids.documentId}`)[0].status).toBe("retired");
 
-    const other = await draft(); await approveDocument(db.sql, other.documentId);
-    const approved = gate(); const commit = gate();
-    const approving = db.sql.begin(async (tx) => { await approveCorpus(tx, other.corpusId); approved.open(); await commit.promise; }).then((value) => value);
-    await approved.promise;
-    const retire = db.sql`UPDATE knowledge_documents SET status = 'retired' WHERE id = ${other.documentId}`;
-    const done = Promise.resolve(retire);
-    commit.open(); await approving; await done;
+    const other = await draft();
+    await approveDocument(db.sql, other.documentId);
+    await runContendedStatements(
+      (sql) => approveCorpus(sql, other.corpusId),
+      (sql) => sql`UPDATE knowledge_documents SET status = 'retired' WHERE id = ${other.documentId}`,
+    );
+    [corpus] = await db.sql`SELECT status FROM knowledge_corpora WHERE id = ${other.corpusId}`;
+    expect(corpus.status).toBe("approved");
     const [row] = await db.sql`SELECT status FROM knowledge_documents WHERE id = ${other.documentId}`;
     expect(row.status).toBe("retired");
   }, 30_000);
