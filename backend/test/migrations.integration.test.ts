@@ -4,6 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   deriveTestDatabaseUrl,
   readTestDatabaseTarget,
@@ -27,10 +28,10 @@ type MigrationFile = {
   checksum: string;
 };
 
-const MIGRATIONS_DIR = new URL("../migrations", import.meta.url).pathname;
-const BACKEND_ROOT = new URL("..", import.meta.url).pathname;
+const MIGRATIONS_DIR = fileURLToPath(new URL("../migrations", import.meta.url));
+const BACKEND_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const IDENTITY_FILE = join(MIGRATIONS_DIR, "0001_identity.sql");
-const RUNNER = new URL("./fixtures/migrate-runner.ts", import.meta.url).pathname;
+const RUNNER = fileURLToPath(new URL("./fixtures/migrate-runner.ts", import.meta.url));
 
 const APPROVED_MANIFEST = [
   "0001_identity",

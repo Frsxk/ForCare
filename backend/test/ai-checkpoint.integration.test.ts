@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { SQL } from "bun";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { readCheckpointTestTarget, type CheckpointTestTarget } from "./fixtures/checkpoint-test-target";
 import {
@@ -23,7 +24,7 @@ import {
 const configured = Boolean(process.env.FORCARE_CHECKPOINT_TEST_DATABASE_URL?.trim());
 const integration = configured ? describe : describe.skip;
 const WORKER_TIMEOUT_MS = 45_000;
-const WORKER = new URL("./fixtures/checkpoint-worker.ts", import.meta.url).pathname;
+const WORKER = fileURLToPath(new URL("./fixtures/checkpoint-worker.ts", import.meta.url));
 
 type WorkerJob = {
   mode: "setup" | "start" | "resume";
@@ -182,7 +183,7 @@ integration("PostgreSQL-backed checkpoint spike", () => {
 
   async function runWorker(job: WorkerJob): Promise<WorkerResult> {
     const child = Bun.spawn([process.execPath, "run", WORKER, JSON.stringify(job)], {
-      cwd: new URL("..", import.meta.url).pathname,
+      cwd: fileURLToPath(new URL("..", import.meta.url)),
       // Only the dedicated test database URL is inherited; no project credentials.
       env: { FORCARE_CHECKPOINT_TEST_DATABASE_URL: target.url },
       stdin: "ignore",

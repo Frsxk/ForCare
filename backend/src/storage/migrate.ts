@@ -2,6 +2,7 @@ import type { SQL } from "bun";
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Versioned PostgreSQL migrations for the ForCare domain schema.
@@ -88,7 +89,7 @@ export type MigrateOptions = {
   lockTimeoutMs?: number;
 };
 
-const DEFAULT_MIGRATIONS_DIR = new URL("../../migrations", import.meta.url).pathname;
+const DEFAULT_MIGRATIONS_DIR = fileURLToPath(new URL("../../migrations", import.meta.url));
 const MIGRATION_FILENAME = /^(\d{4})_([a-z0-9_]+)\.sql$/;
 const HISTORY_TABLE = "public.schema_migrations";
 const MIGRATION_LOCK_KEY = 4868321543210;

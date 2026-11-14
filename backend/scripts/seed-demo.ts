@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { constants } from "node:fs";
 import { mkdir, open, realpath, rm } from "node:fs/promises";
 import { basename, dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { hashPassword } from "../src/auth/password";
 import { readNurseEmailDomain, readServerConfig } from "../src/config";
 import { AppError } from "../src/http/errors";
@@ -28,7 +29,7 @@ function requiredFlag(name: string): string {
 }
 
 async function resolveOutsideOutput(outputArgument: string): Promise<string> {
-  const repositoryRoot = await realpath(new URL("../..", import.meta.url).pathname);
+  const repositoryRoot = await realpath(fileURLToPath(new URL("../..", import.meta.url)));
   const output = resolve(outputArgument);
   if (output === repositoryRoot || output.startsWith(`${repositoryRoot}${sep}`)) {
     throw new Error("seed aborted: --output must be outside the repository");

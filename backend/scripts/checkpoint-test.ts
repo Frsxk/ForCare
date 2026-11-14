@@ -6,6 +6,7 @@
  * no DATABASE_URL or .env fallback.
  */
 
+import { fileURLToPath } from "node:url";
 import { readCheckpointTestTarget } from "../test/fixtures/checkpoint-test-target";
 
 try {
@@ -17,7 +18,7 @@ try {
 }
 
 const child = Bun.spawn([process.execPath, "test", "test/ai-checkpoint.integration.test.ts", "--timeout", "120000"], {
-  cwd: new URL("..", import.meta.url).pathname,
+  cwd: fileURLToPath(new URL("..", import.meta.url)),
   stdout: "inherit",
   stderr: "inherit",
   env: {

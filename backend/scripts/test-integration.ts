@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { readTestDatabaseTarget, type TestDatabaseTarget } from "../test/fixtures/test-database-target";
 
 /**
@@ -35,7 +36,7 @@ const child = Bun.spawn(
     "test/analysis-pipeline.integration.test.ts",
   ],
   {
-    cwd: new URL("..", import.meta.url).pathname,
+    cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { ...process.env, FORCARE_TEST_DATABASE_URL: target.url },
     stdin: "inherit",
     stdout: "inherit",

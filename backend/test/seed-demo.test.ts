@@ -2,9 +2,10 @@ import { afterAll, expect, test } from "bun:test";
 import { access, mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const backendDir = new URL("..", import.meta.url).pathname;
-const repositoryRoot = new URL("../..", import.meta.url).pathname;
+const backendDir = fileURLToPath(new URL("..", import.meta.url));
+const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const outputName = "seed-credentials-must-not-exist.json";
 
 const scratchDirs: string[] = [];
@@ -48,11 +49,21 @@ function runSeed(output: string, env: Record<string, string>) {
   ]);
 }
 
+test("rejects a direct output inside the repository before database configuration", async () => {
+  const output = join(repositoryRoot, "backend", outputName);
+
+  const [stdout, stderr, exitCode] = await runSeed(output, {});
+  expect(exitCode).not.toBe(0);
+  expect(`${stdout}\n${stderr}`).toContain("--output must be outside the repository");
+  expect(`${stdout}\n${stderr}`).not.toContain("Invalid server configuration");
+  await expect(access(output)).rejects.toThrow();
+}, 30_000);
+
 test("rejects a lexically outside output whose symlinked parent resolves inside the repository", async () => {
   const scratch = await mkdtemp(join(tmpdir(), "forcare-seed-guard-"));
   scratchDirs.push(scratch);
   const link = join(scratch, "repository-link");
-  await symlink(repositoryRoot, link, "dir");
+  await symlink(repositoryRoot, link, process.platform === "win32" ? "junction" : "dir");
   const output = join(link, "backend", outputName);
 
   const [stdout, stderr, exitCode] = await runSeed(output, {});

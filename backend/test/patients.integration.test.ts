@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { hashPassword } from "../src/auth/password";
 import { provisionNurseInTransaction } from "../src/staff/provisioning";
 import { createOperatorAssignmentService } from "../src/patients/operator-service";
@@ -400,7 +401,7 @@ integration("owned patient profile and scope integration", () => {
         "approval-cli-1",
       ],
       {
-        cwd: new URL("..", import.meta.url).pathname,
+        cwd: fileURLToPath(new URL("..", import.meta.url)),
         env: { ...process.env, ...databaseEnv() },
         stdout: "pipe",
         stderr: "pipe",
@@ -438,7 +439,7 @@ integration("owned patient profile and scope integration", () => {
         "approval-cli-2",
       ],
       {
-        cwd: new URL("..", import.meta.url).pathname,
+        cwd: fileURLToPath(new URL("..", import.meta.url)),
         env: { ...process.env, ...databaseEnv() },
         stdout: "pipe",
         stderr: "pipe",

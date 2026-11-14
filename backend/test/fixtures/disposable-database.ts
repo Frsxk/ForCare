@@ -1,5 +1,6 @@
 import { SQL } from "bun";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import type { AuthConfig } from "../../src/config";
 import { createDatabaseFromEnv } from "../../src/storage/database";
 import { migrate } from "../../src/storage/migrate";
@@ -9,7 +10,7 @@ import {
   type TestDatabaseTarget,
 } from "./test-database-target";
 
-const MIGRATIONS_DIR = new URL("../../migrations", import.meta.url).pathname;
+const MIGRATIONS_DIR = fileURLToPath(new URL("../../migrations", import.meta.url));
 
 export type DisposableDatabase = {
   name: string;

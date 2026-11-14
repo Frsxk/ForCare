@@ -1,14 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import type { SQL } from "bun";
 import { createHash } from "node:crypto";
-import { migrate, planMigrations, type MigrationFile } from "../src/storage/migrate";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadMigrations, migrate, planMigrations, type MigrationFile } from "../src/storage/migrate";
 
 /**
  * Pure regression tests for migration planning and session cleanup. They never
  * connect to PostgreSQL, so they run without FORCARE_TEST_DATABASE_URL.
  */
 
-const MIGRATIONS_DIR = new URL("../migrations", import.meta.url).pathname;
+const MIGRATIONS_DIR = fileURLToPath(new URL("../migrations", import.meta.url));
 
 function fixtureFile(version: string, name: string): MigrationFile {
   const sql = `SELECT 1; -- ${version}_${name}`;
@@ -37,6 +40,15 @@ function errorFrom(run: () => unknown): { code?: string; message: string } {
 const IDENTITY = fixtureFile("0001", "identity");
 const PATIENTS = fixtureFile("0002", "patients_operations");
 const CLINICAL = fixtureFile("0003", "clinical_sources");
+
+describe("loadMigrations default directory", () => {
+  test("loads shipped migration SQL without an explicit directory", async () => {
+    const files = await loadMigrations();
+    expect(files.length).toBeGreaterThan(0);
+    const identity = files.find((file) => file.version === "0001" && file.name === "identity");
+    expect(identity?.sql).toBe(await readFile(join(MIGRATIONS_DIR, "0001_identity.sql"), "utf8"));
+  });
+});
 
 describe("planMigrations contiguous manifest prefix", () => {
   test("rejects files that skip an intermediate manifest version", () => {

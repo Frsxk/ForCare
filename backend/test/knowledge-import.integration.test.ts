@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { createDisposableDatabase, testAuthConfig } from "./fixtures/disposable-database";
 import { provisionNurseInTransaction } from "../src/staff/provisioning";
 import { importFixedKnowledgeCorpus } from "../src/knowledge/corpus-import";
@@ -29,7 +30,7 @@ integration("fixed corpus importer fail-closed (real PostgreSQL)", () => {
         AUTH_LOCAL_HTTP_TEST: "true", AUTH_NURSE_EMAIL_DOMAIN: "nurse.invalid", AUTH_SESSION_SECRET: testAuthConfig().sessionSecret };
       const cli = async (args: string[] = []) => {
         const child = Bun.spawn([process.execPath, "run", "scripts/knowledge-corpus.ts", ...args], {
-          cwd: new URL("..", import.meta.url).pathname, env, stdout: "pipe", stderr: "pipe",
+          cwd: fileURLToPath(new URL("..", import.meta.url)), env, stdout: "pipe", stderr: "pipe",
         });
         const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
         return { stdout, stderr, exit };
