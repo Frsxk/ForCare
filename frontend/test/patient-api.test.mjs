@@ -80,16 +80,42 @@ test("profile contacts use actual versioned PATCH endpoint and verify readback",
  await writer.send(operation); assert.equal(writer.getSnapshot().status, "verified"); assert.deepEqual(methods, ["PATCH", "GET"]);
 });
 test("patient projections expose active orders and published claims only, dropping private fields", () => {
- const guide = decodePatientGuide({ patientId: ownId, sources: [{ id, title: "Instructions", body: "Visible", revisionNumber: 1, approvedAt: time, internalNote: "SECRET" }], orders: [{ id, kind: "care", status: "active", instructions: "Visible order", items: [{ type: "care", text: "Visible item" }], effectiveFrom: time, effectiveTo: null, internalNote: "SECRET" }], inputSnapshot: "SECRET" }, ownId);
- assert.doesNotMatch(JSON.stringify(guide), /SECRET|inputSnapshot|internalNote/);
+ const guide = decodePatientGuide({ patientId: ownId, sources: [{ id, kind: "wound_care", title: "Instructions", body: "Visible", revisionNumber: 1, approvedAt: time, internalNote: "SECRET", unknownField: "SECRET" }], orders: [{ id, sourceDocumentId: id, kind: "care", status: "active", instructions: "Visible order", items: [{ type: "wound_care", text: "Visible item", internalNote: "SECRET", unknownField: "SECRET" }], effectiveFrom: time, effectiveTo: null, internalNote: "SECRET", unknownField: "SECRET" }], inputSnapshot: "SECRET", unknownField: "SECRET" }, ownId);
+ assert.doesNotMatch(JSON.stringify(guide), /SECRET|inputSnapshot|internalNote|unknownField/);
+ assert.equal(guide.sources[0].kind, "wound_care");
+ assert.equal(guide.orders[0].sourceDocumentId, id);
+ assert.deepEqual(guide.orders[0].items, [{ type: "wound_care", text: "Visible item" }]);
  const published = { id, patientId: ownId, checkInId: id, status: "published", revisionNumber: 1, reviews: [], publication: { analysisId: id, revisionNumber: 1, publishedAt: time }, claims: [{ claimId: id, text: "Approved claim" }], inputSnapshot: "SECRET", provider: "SECRET" };
  assert.doesNotMatch(JSON.stringify(decodePublishedAnalysis(published, ownId)), /SECRET|provider|inputSnapshot/);
  assert.throws(() => decodePublishedAnalysis({ ...published, status: "draft" }, ownId)); assert.throws(() => decodePublishedAnalysis({ ...published, reviews: [{ comment: "SECRET" }] }, ownId)); assert.throws(() => decodePublishedAnalysis(published, id));
  assert.equal(decodePatientProfile(profile).id, ownId);
 });
+test("patient guide retains every documented classification and nullable or empty content", () => {
+ const kinds = ["protocol", "medication", "wound_care", "diet", "activity", "danger_sign"];
+ const types = ["medication", "storage", "wound_care", "device_care", "diet", "activity", "danger_sign", "first_aid", "followup"];
+ const sources = kinds.map(kind => ({ id, kind, title: "", body: "", revisionNumber: 1, approvedAt: null }));
+ const orders = [{ id, sourceDocumentId: id, kind: "care", status: "active", instructions: "", items: types.map(type => ({ type, text: "" })), effectiveFrom: time, effectiveTo: null }];
+ const guide = decodePatientGuide({ patientId: ownId, sources, orders }, ownId);
+ assert.deepEqual(guide, { patientId: ownId, sources, orders: orders.map(order => Object.fromEntries(Object.entries(order).filter(([key]) => key !== "status"))) });
+ assert.deepEqual(decodePatientGuide({ patientId: ownId, sources: [], orders: [] }, ownId), { patientId: ownId, sources: [], orders: [] });
+ assert.deepEqual(decodePatientGuide({ patientId: ownId, sources, orders: [{ ...orders[0], items: [] }] }, ownId).orders[0].items, []);
+});
+test("patient guide rejects missing or invalid classification metadata without defaults", () => {
+ const source = { id, kind: "protocol", title: "Instructions", body: "Visible", revisionNumber: 1, approvedAt: time };
+ const order = { id, sourceDocumentId: id, kind: "care", status: "active", instructions: "Visible order", items: [{ type: "first_aid", text: "Visible item" }], effectiveFrom: time, effectiveTo: null };
+ for (const kind of [undefined, null, "", "care", "unknown", 1]) {
+  assert.throws(() => decodePatientGuide({ patientId: ownId, sources: [{ ...source, kind }], orders: [order] }, ownId), /Invalid enum/);
+ }
+ for (const type of [undefined, null, "", "care", "protocol", "unknown", 1]) {
+  assert.throws(() => decodePatientGuide({ patientId: ownId, sources: [source], orders: [{ ...order, items: [{ type, text: "Visible item" }] }] }, ownId), /Invalid enum/);
+ }
+ for (const sourceDocumentId of [undefined, null, "", "not-a-uuid", 1]) {
+  assert.throws(() => decodePatientGuide({ patientId: ownId, sources: [source], orders: [{ ...order, sourceDocumentId }] }, ownId));
+ }
+});
 test("verification mismatch preserves uncertainty and an old receipt cannot verify a new create", async () => {
  let count = 0;
- const writer = new PatientWriteController(client(async (_url, init) => { if (++count > 2) throw Error("lost"); return response(record); }), ownId, () => true);
+ const writer = new PatientWriteController(client(async () => { if (++count > 2) throw Error("lost"); return response(record); }), ownId, () => true);
  await writer.send(prepareCheckIn(ownId, input)); assert.equal(writer.getSnapshot().status, "verified");
  await writer.send(prepareCheckIn(ownId, input)); assert.equal(writer.getSnapshot().status, "uncertain"); await writer.reconcile(); assert.equal(count, 3); assert.equal(writer.getSnapshot().status, "uncertain");
  const mismatch = new PatientWriteController(client(async (_url, init) => response(init.method === "POST" ? record : { ...record, note: "Changed elsewhere" })), ownId, () => true);

@@ -15,6 +15,18 @@ export function patientId(value: unknown): string {
 }
 function timestamp(value: unknown) { const result = text(value); if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(result) || !Number.isFinite(Date.parse(result)) || new Date(result).toISOString().replace(".000Z", "Z") !== result.replace(".000Z", "Z")) throw new Error("Invalid timestamp"); return result; }
 function array<T>(value: unknown, decode: (value: unknown) => T): T[] { if (!Array.isArray(value)) throw new Error("Invalid list"); return value.map(decode); }
+export type NurseDirectory = { id: string; displayName: string; staffCode: string };
+export function decodeNurseDirectory(value: unknown): { items: NurseDirectory[]; page: { nextCursor: string | null; hasMore: boolean } } {
+  const data = object(value), page = object(data.page), nextCursor = page.nextCursor === null ? null : text(page.nextCursor);
+  if (typeof page.hasMore !== "boolean" || page.hasMore !== (nextCursor !== null)) throw new Error("Invalid nurse directory pagination");
+  if (!Array.isArray(data.items)) throw new Error("Invalid nurse directory");
+  return { items: data.items.map(value => {
+    const nurse = object(value);
+    if (Object.keys(nurse).some(key => !["id", "displayName", "staffCode", "active", "workingWindowSummary"].includes(key)) || nurse.active !== true || ("workingWindowSummary" in nurse && nurse.workingWindowSummary !== null)) throw new Error("Inactive or invalid nurse");
+    return { id: text(nurse.id), displayName: text(nurse.displayName), staffCode: text(nurse.staffCode) };
+  }), page: { nextCursor, hasMore: page.hasMore } };
+}
+
 export function decodePatientProfile(value: unknown) {
   const p = object(value);
   if (p.role !== "patient") throw new Error("Patient profile required");
@@ -54,7 +66,7 @@ function page<T>(value: unknown, decode: (v: unknown) => T) {
 export function decodePatientGuide(value: unknown, ownId: string) {
   const g = object(value);
   if (patientId(g.patientId) !== ownId) throw new Error("Patient mismatch");
-  return { patientId: ownId, sources: array(g.sources, value => { const s = object(value); return { id: patientId(s.id), title: text(s.title), body: text(s.body), revisionNumber: integer(s.revisionNumber), approvedAt: s.approvedAt === null ? null : timestamp(s.approvedAt) }; }), orders: array(g.orders, value => { const o = object(value); if (o.status !== "active") throw new Error("Inactive order"); return { id: patientId(o.id), kind: member(o.kind, ["medication", "followup", "care"]), instructions: text(o.instructions), items: o.items === undefined ? [] : array(o.items, item => { const i = object(item); return { text: text(i.text) }; }), effectiveFrom: timestamp(o.effectiveFrom), effectiveTo: o.effectiveTo === null ? null : timestamp(o.effectiveTo) }; }) };
+  return { patientId: ownId, sources: array(g.sources, value => { const s = object(value); return { id: patientId(s.id), kind: member(s.kind, ["protocol", "medication", "wound_care", "diet", "activity", "danger_sign"]), title: text(s.title), body: text(s.body), revisionNumber: integer(s.revisionNumber), approvedAt: s.approvedAt === null ? null : timestamp(s.approvedAt) }; }), orders: array(g.orders, value => { const o = object(value); if (o.status !== "active") throw new Error("Inactive order"); return { id: patientId(o.id), sourceDocumentId: patientId(o.sourceDocumentId), kind: member(o.kind, ["medication", "followup", "care"]), instructions: text(o.instructions), items: o.items === undefined ? [] : array(o.items, item => { const i = object(item); return { type: member(i.type, ["medication", "storage", "wound_care", "device_care", "diet", "activity", "danger_sign", "first_aid", "followup"]), text: text(i.text) }; }), effectiveFrom: timestamp(o.effectiveFrom), effectiveTo: o.effectiveTo === null ? null : timestamp(o.effectiveTo) }; }) };
 }
 export type PatientGuide = ReturnType<typeof decodePatientGuide>;
 export function decodePublishedAnalysis(value: unknown, ownId: string) {
@@ -66,6 +78,7 @@ export type PublishedAnalysis = ReturnType<typeof decodePublishedAnalysis>;
 export function createPatientApi(api: ApiClient) {
   return {
     profile: (signal?: AbortSignal) => api.request("/api/v1/me/profile", decodePatientProfile, { signal }),
+    nurses: (cursor?: string | null, signal?: AbortSignal) => { const query = new URLSearchParams({ limit: "100" }); if (cursor) query.set("cursor", cursor); return api.request(`/api/v1/nurses?${query}`, decodeNurseDirectory, { signal }); },
     checkIns: (ownId: string, cursor?: string | null, signal?: AbortSignal) => { patientId(ownId); const query = new URLSearchParams({ limit: "20" }); if (cursor) query.set("cursor", cursor); return api.request(`/api/v1/check-ins?${query}`, v => page(v, c => boundCheckIn(c, ownId)), { signal }); },
     checkIn: (ownId: string, id: string, signal?: AbortSignal) => api.request(`/api/v1/check-ins/${patientId(id)}`, v => { const c = boundCheckIn(v, ownId); if (c.id !== id) throw new Error("Target mismatch"); return c; }, { signal }),
     guide: (ownId: string, signal?: AbortSignal) => api.request(`/api/v1/patients/${patientId(ownId)}/care-guide`, v => decodePatientGuide(v, ownId), { signal }),
