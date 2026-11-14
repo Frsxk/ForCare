@@ -1,6 +1,6 @@
 # Implemented backend API
 
-Base path: `/api/v1`. This reference covers the implemented backend: identity, profiles, clinical sources/care instructions, check-ins, observations, assessment availability, approved knowledge search and reviewed analysis drafts. Booking, notifications and push delivery are pending. Numerical scoring is explicitly unavailable until its clinical policy is approved.
+Base path: `/api/v1`. This reference covers the implemented backend: identity, profiles, versioned nurse availability, bookings, scheduling, priority availability requests, clinical sources/care instructions, check-ins, observations, assessment availability, approved knowledge search and reviewed analysis drafts. Notifications and push delivery are pending. Numerical scoring is explicitly unavailable until its clinical policy is approved.
 
 ## Browser session contract
 
@@ -114,11 +114,11 @@ Patients may edit `phone`, `addressLine`, `emergencyContactName`, `emergencyCont
 }
 ```
 
-Only active accounts with an active, approved nurse identity matching the exact configured domain are listed. Availability is not built, so `workingWindowSummary` is null. The approved synthetic seed creates Ayu Pratama (`ayu@nurse.invalid`), Bima Santoso (`bima@nurse.invalid`) and Citra Lestari (`citra@nurse.invalid`). Passwords are generated privately, never fixed in source.
+Only active accounts with an active, approved nurse identity matching the exact configured domain are listed. No automatic availability is inferred, so `workingWindowSummary` is null. The approved synthetic seed creates Ayu Pratama (`ayu@nurse.invalid`), Bima Santoso (`bima@nurse.invalid`) and Citra Lestari (`citra@nurse.invalid`). Passwords are generated privately, never fixed in source.
 
-`GET /me/access` returns `scopes` and `accessContexts`. Patients have `patient:self`; the directory is also intentionally patient-accessible. Nurses have `nurse:directory`, plus scopes derived from their actual active grants: `primary` → `nurse:assigned`, `request_intake` → `nurse:request_intake`, `visit` → `nurse:visit`. A reported grant is not a promise that its future booking/visit API is implemented. Expired/revoked grants are excluded. Capabilities and resource checks still apply.
+`GET /me/access` returns `scopes` and `accessContexts`. Patients have `patient:self`; the directory is also intentionally patient-accessible. Nurses have `nurse:directory`, plus scopes derived from their actual active grants: `primary` → `nurse:assigned`, `request_intake` → `nurse:request_intake`, `visit` → `nurse:visit`. An intake or visit grant authorizes only its documented booking/visit projection; it never becomes a primary assignment. Expired/revoked grants are excluded. Capabilities and resource checks still apply.
 
-`GET /patients?scope=assigned&search=...&limit=20&cursor=...` requires an eligible nurse. Scope is required. Search matches display name or record number inside active primary grants only, before pagination. It never searches NIK. The response has `data.scope`, `data.items` and `data.page`. Items contain `id`, `displayName`, `recordNumber`, `latestCheckIn` and `nextVisit: null`. `latestCheckIn` is null until a report is submitted; otherwise it contains that report’s `id`, `condition`, `localDate` and `submittedAt`. Private drafts are excluded. Visits remain absent.
+`GET /patients?scope=assigned&search=...&limit=20&cursor=...` requires an eligible nurse. Scope is required. Search matches display name or record number inside active primary grants only, before pagination. It never searches NIK. The response has `data.scope`, `data.items` and `data.page`. Items contain `id`, `displayName`, `recordNumber`, `latestCheckIn` and `nextVisit: null`. `latestCheckIn` is null until a report is submitted; otherwise it contains that report’s `id`, `condition`, `localDate` and `submittedAt`. Private booking drafts are excluded. Use the selected-nurse schedule route below for accepted visits.
 
 `GET /patients/:patientId/summary` requires a current primary grant and returns the same summary fields plus the count of current published order heads whose status is `active`. This count is status-based; patient care-guide/order reads additionally enforce the effective time window.
 
@@ -130,9 +130,123 @@ Lists default to 20, maximum 100. Cursors expire after 15 minutes and bind to th
 
 ## Capabilities and limits
 
-`GET /capabilities` requires authentication. Identity, profiles, patient scope, nurse directory, clinical records and check-ins are enabled. Assessment/scoring, analysis drafts and knowledge retrieval/web push are still reported as gated policy metadata: `analysisDrafts` uses G02, while `knowledgeRetrieval` and `webPush` use G05. These existing values are not runtime feature switches. Approved-corpus knowledge search and asynchronous analysis/review/publication routes are implemented behind their own authorization and corpus gates as documented below; push delivery is not implemented. Availability/bookings are missing, and notifications are not built. The assessment read endpoint is available to report the unavailable score state, not to calculate a numerical score. Numerical clinical scoring remains unavailable regardless of corpus or analysis status.
+`GET /capabilities` requires authentication. Identity, profiles, patient scope, nurse directory, `availability`, `bookings`, `priorityRequests`, clinical records and check-ins are enabled. Assessment/scoring, analysis drafts and knowledge retrieval/web push are still reported as gated policy metadata: `analysisDrafts` uses G02, while `knowledgeRetrieval` and `webPush` use G05. These existing values are not runtime feature switches. Approved-corpus knowledge search and asynchronous analysis/review/publication routes are implemented behind their own authorization and corpus gates as documented below; push delivery and notifications are not implemented. The assessment read endpoint is available to report the unavailable score state, not to calculate a numerical score. Numerical clinical scoring remains unavailable regardless of corpus, analysis or scheduling status.
 
 Rate limits return 429 `RATE_LIMITED` with `Retry-After`: login 5 attempts per IP/email per 15 minutes plus 30 per IP, registration 3 per IP per hour, authenticated requests 120 per account per minute. Limits are per process and use the direct socket address, not forwarded headers. Run one API process; proxy-aware client IP policy and shared limiting remain deployment work.
+
+## Versioned nurse availability
+
+An active, approved nurse manages only their own availability. There are no implicit working hours, time zone or generated slots. Every range is half-open `[start,end)`, and every timestamp is an exact UTC ISO timestamp with `Z`, using zero or three fractional digits.
+
+- `GET /nurses/me/availability` returns `{nurseId,version:0,current:null}` before the first publication. Otherwise `version` is the latest integer version and `current` is `{id,version,timeZone,slotMinutes,bufferMinutes,effectiveFrom,effectiveTo,windows,slots:[{id,startsAt,endsAt}]}`. `timeZone` is a valid IANA zone used to validate local windows; timestamps remain UTC.
+- `PUT /nurses/me/availability` publishes a complete immutable replacement and returns that same read DTO. Its strict body is:
+
+```json
+{
+  "expectedVersion": 0,
+  "timeZone": "Asia/Jakarta",
+  "slotMinutes": 60,
+  "bufferMinutes": 0,
+  "effectiveFrom": "2026-11-16T00:00:00Z",
+  "effectiveTo": "2026-11-23T00:00:00Z",
+  "windows": [{"weekday":1,"startMinute":540,"endMinute":1020}],
+  "slots": [{"startsAt":"2026-11-16T02:00:00Z","endsAt":"2026-11-16T03:00:00Z"}]
+}
+```
+
+This is an illustrative synthetic demo entry, not a production default. The explicit demo policy is Monday–Friday 09:00–17:00 `Asia/Jakarta`, 60-minute slots and zero buffer, but operators/nurses must publish every window and UTC slot deliberately; migrations and the nurse seed create neither those windows nor any slot. `weekday` is ISO Monday 1 through Sunday 7, `startMinute` is 0–1439, and `endMinute` is 1–1440. `slotMinutes` is 1–480 and `bufferMinutes` is 0–120. The effective horizon is at most 90 days, `effectiveFrom` cannot be past, windows cannot overlap, and at most 200 explicit slots can be supplied.
+
+Each slot must have exactly the configured duration, align to a local working window and fit fully inside that one window and the effective horizon. Explicit UTC endpoints disambiguate daylight-saving transitions; the server never guesses a local conversion. Versions, windows and slots are immutable. Publishing locks the nurse and increments the version. A slot is current only when its version is the highest published version whose `effectiveFrom <= startsAt` and whose effective horizon covers it. A later version replaces unaccepted eligibility from its effective time; it never rewrites an accepted booking's interval or historical availability.
+
+`GET /nurses/:nurseId/slots?from=<UTC>&to=<UTC>&cursor=&limit=` is available to authenticated patients and nurses. The required range is at most 31 days. Only future, currently eligible, unreserved slots for an active selected nurse are returned; no patient or booking occupancy detail is exposed. No published availability yields a valid empty list, not a default schedule. Its DTO is:
+
+```json
+{
+  "nurseId": "<staff UUID>",
+  "timeZone": "Asia/Jakarta",
+  "items": [{"id":"<slot UUID>","nurseId":"<staff UUID>","startsAt":"<UTC>","endsAt":"<UTC>","availabilityVersionId":"<version UUID>","availabilityVersion":1}],
+  "page": {"nextCursor":null,"hasMore":false}
+}
+```
+
+All bounded lists here default to 20 and allow at most 100 entries. Cursors are opaque and bound to session, scope and filters.
+
+## Bookings and selected-nurse scheduling
+
+All scheduling mutations require the session cookie, exact Origin, CSRF, `Idempotency-Key` and the body's current `expectedVersion`; create is the exception because no version exists yet. Strict unknown-field rejection, actor/session-scoped receipts and the no-automatic-retry rule from the profile contract apply. Timestamps are canonical UTC. Stale writes return 409 `VERSION_CONFLICT`; invalid state changes return 409 `INVALID_TRANSITION`; competing reservations return 409 `SCHEDULE_CONFLICT` without naming another patient, exposing their reason or leaking a database error.
+
+### Strict intake and privacy
+
+Every create or supplied replacement intake contains **all** of these fields:
+
+```json
+{
+  "complaint": "Synthetic complaint",
+  "otherComplaint": null,
+  "history": null,
+  "consciousness": "alert",
+  "conditions": ["pale","weak"],
+  "observations": [{"type":"temperature_c","value":36.8,"unit":"c","observedAt":"2026-11-13T12:00:00Z"}],
+  "note": null,
+  "consent": false
+}
+```
+
+`complaint` is nonblank and at most 2000 characters. `otherComplaint` is null or nonblank text up to 2000; `history` and `note` are null or nonblank text up to 4000. `consciousness` is `alert|drowsy|confused|null`. `conditions` contains unique values from `pale|weak|cold_sweat|none`, at most four; `none` cannot be combined. `observations` has at most six unique typed measurements using exactly the check-in type/value/unit/`observedAt` contract below. Null and empty arrays mean not recorded: they never imply zero, normal consciousness, normal measurements or clinical clearance. No score, urgency or clinical risk is derived. Submission additionally requires explicit `consent:true` and a complete owned patient profile with phone and address. Patients fill the required address through `PATCH /me/profile` before submitting.
+
+The server—not the client—snapshots `{fullName,birthDate,gender,phone,addressLine,recordNumber,emergencyContactName,emergencyContactPhone}` on submit. NIK, editable identity/actor/patient fields, hospital-record lookups, automatic RM linkage, guessed discharge data and inferred risk are not accepted. A draft remains private to its patient. Submission grants intake access only to the selected nurse; it does not change the primary nurse or existing primary grants. Acceptance replaces intake access with an actual visit grant ending at the scheduled end. Rejection/cancellation revokes the relevant grant; reschedule updates the visit grant expiry. Once access is terminal, revoked or expired, the nurse receives only minimal own-decision/event metadata: `intake` and `profileSnapshot` are null. General `/patients` chart/detail routes remain closed to intake/visit grants.
+
+### Patient booking endpoints
+
+- `POST /me/bookings` → 201 draft; strict body `{nurseId,slotId:uuid|null,startsAt,endsAt,intake}`.
+- `PATCH /me/bookings/:id` edits only a draft; strict body `{expectedVersion,nurseId?,slotId?,startsAt?,endsAt?,intake?}` with at least one optional field. Any supplied intake is a complete replacement, and timing/slot fields must remain consistent.
+- `GET /me/bookings?status=&cursor=&limit=` and `GET /me/bookings/:id` return the owner's draft/submitted/terminal records, current snapshot and history.
+- `POST /me/bookings/:id/submit` takes `{expectedVersion}`. Create is 201; submit is a distinct explicit action.
+- `POST /me/bookings/:id/cancel` takes `{expectedVersion,reason}`. The patient may cancel a draft or their submitted/accepted request only before its start.
+
+The booking DTO is:
+
+```json
+{
+  "id":"<booking UUID>","patientId":"<patient UUID>","nurseId":"<staff UUID>",
+  "nurse":{"id":"<staff UUID>","displayName":"Ayu Pratama","staffCode":"NUR-001"},
+  "slotId":"<slot UUID or null>","availabilityVersionId":"<version UUID or null>",
+  "startsAt":"<UTC>","endsAt":"<UTC>","status":"draft","version":0,
+  "intake":{},"profileSnapshot":null,"visitId":null,"priorityRequestId":null,
+  "decisionReason":null,"submittedAt":null,"decidedAt":null,"cancelledAt":null,
+  "createdAt":"<UTC>","updatedAt":"<UTC>",
+  "events":[{"id":"<event UUID>","action":"created","version":0,"reason":null,"data":{},"createdAt":"<UTC>"}]
+}
+```
+
+Status is exactly `draft|submitted|accepted|rejected|cancelled`; `visitId` is null until acceptance. `priorityRequestId` is the effective approved request, if any, otherwise null. Events are append-only; reason is patient-facing and event data contains only interval/slot/version metadata, never intake/contact data. Intake, submitted identity, selected nurse and decision history cannot be silently rewritten. Accepted reschedule is the only interval/slot/version change after submission.
+
+Ordinary submission requires an exact current slot and timestamps or an exact approved exception; it checks active identities, full window/duration eligibility and future timing. At most **three** submitted/accepted bookings with `endsAt > now` may be active per patient. Drafts do not count. Multiple submitted requests may reference one slot; only acceptance reserves it.
+
+### Selected nurse decisions, cancellation and schedule
+
+- `GET /bookings?status=&search=&cursor=&limit=` lists only the authenticated selected nurse's eligible non-draft requests. Search is limited to patient display name/record number.
+- `GET /bookings/:id` returns the selected-nurse projection. Private intake/profile data requires the matching active intake/visit grant. After the grant expires/revokes or the request becomes terminal, only minimal own-decision/event metadata remains; `intake` and `profileSnapshot` are null and contact details are omitted. It never widens chart access.
+- `POST /bookings/:id/decisions` takes `{expectedVersion,decision:"accept|reject",reason:string|null}`. Rejection requires a nonblank reason. Acceptance is a separate explicit action after submission and any human availability exception. It revalidates selected-nurse eligibility/grant, current availability or exact exception, future interval, cap and conflicts; returns the booking with actual `visitId` on success.
+- `POST /bookings/:id/cancel` takes `{expectedVersion,reason}` and is selected-nurse-only, before start.
+- `POST /bookings/:id/reschedule` takes `{expectedVersion,slotId:uuid|null,startsAt,endsAt,reason,patientAgreed:true}` and is selected-nurse-only for an accepted booking before both current and new start. The nurse cannot change. It requires a current exact slot or exact approved exception, repeats all fresh checks, preserves the visit ID/intake, and atomically updates audit/history and the scheduled visit grant.
+
+Both the nurse's accepted reservation—including the nurse buffer—and the patient's raw interval participate in overlap exclusion for acceptance and reschedule, in normal hours and exception cases. No competing patient's occupancy/reason is disclosed. Cancellation is allowed only before start, never historical deletion.
+
+`GET /schedule?from=&to=&cursor=&limit=` returns only the selected nurse's actual accepted scheduled visits as bounded safe booking DTOs. Dates are UTC; there are no fabricated/completed clinical visits. `GET /bookings/:id/care-guide` requires the selected nurse's active accepted-visit grant and returns only active patient-facing care-guide/order projections from the existing clinical service—not raw snapshots or internal notes. Access ends at scheduled end/cancellation and confers no primary assignment.
+
+## Priority availability requests
+
+Priority is a human scheduling exception workflow, not emergency dispatch, a score or an AI/clinical bypass. A draft must first exist, then the patient explicitly requests availability, the selected nurse explicitly states availability with a reason, the patient separately submits the booking, and the nurse separately accepts it. Availability approval alone never submits, accepts, reserves, reschedules or dispatches a visit.
+
+- `POST /me/priority-requests` → 201 pending request; body `{bookingId,statement}`. `statement` is nonblank, at most 4000 characters. The booking must be the patient's own draft (or an owned accepted booking for a proposed reschedule). For an accepted-reschedule request only, `startsAt` and `endsAt` may be supplied together for the exact proposed target; nurse and intake remain unchanged. Nothing changes in the accepted booking until its separate reschedule.
+- `GET /me/priority-requests?cursor=&limit=` and `GET /me/priority-requests/:id` return the patient's requests.
+- `GET /priority-requests?cursor=&limit=` and `GET /priority-requests/:id` return only requests naming the selected nurse, with safe patient display identity, requested time and statement—never private draft intake.
+- `POST /priority-requests/:id/review` is one irreversible selected-nurse decision with strict body `{expectedVersion,decision:"accept_availability|decline",reason,available}`. Exact nonblank reason (up to 4000) is mandatory. `accept_availability` requires `available:true`; decline requires `available:false`.
+
+The priority DTO is `{id,bookingId,patientId,nurseId,startsAt,endsAt,statement,status,reason,version,reviewedAt,createdAt}`, where status is `pending|availability_accepted|declined`. Nurse projections may additionally contain only `patient:{displayName,recordNumber}`. Original statement, booking/nurse binding and interval are immutable. An accepted review creates an immutable exact-interval schedule exception bound to the current booking/nurse; it is usable only for that future target and active eligible selected nurse. Ordinary outside-hours submission remains 422 `VALIDATION_FAILED` until this exact approval exists. Review rejects an already accepted nurse/patient conflict with 409 `SCHEDULE_CONFLICT`; final acceptance/reschedule still rechecks and enforces exclusion constraints. Duration, future-active cap and overlap checks are never waived.
+
+ForCare is not an emergency-response service. If you need urgent help, contact local emergency services. No response time, emergency number or priority clinical assessment is promised.
 
 ## Medical records and care instructions
 
