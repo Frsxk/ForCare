@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { useNurseProfile } from "@/components/nurse-workspace-provider";
 import { Avatar } from "@/components/patient-identity";
+import { AccountPopover } from "@/components/account-popover";
 export function NurseHeader({
   activePage,
 }: {
@@ -79,19 +80,18 @@ export function NurseHeader({
             >
               <Bell size={21} strokeWidth={1.6} aria-hidden="true" />
             </Link>
-            <Link
-              href="/profil"
+            <AccountPopover
+              name={name}
+              detail={staffCode}
+              profileHref="/profil"
               className={`profile-button${activePage === "profile" ? " is-active" : ""}`}
-              aria-current={activePage === "profile" ? "page" : undefined}
-              onClick={() => setMenuOpen(false)}
-              aria-label={`Lihat profil ${name}`}
             >
               <Avatar initials={initials} nurse />
               <span className="profile-copy">
                 <strong>{name}</strong>
                 <span>{staffCode}</span>
               </span>
-            </Link>
+            </AccountPopover>
             <button
               className="icon-button menu-toggle"
               aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"}

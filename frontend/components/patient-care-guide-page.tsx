@@ -1,31 +1,57 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { Bell, Menu, X, Pill, BellRing, LockKeyhole, HeartPulse, Utensils, Footprints, TriangleAlert, UserRound, CalendarDays, ChevronDown } from "lucide-react";
+import { useId, useState } from "react";
+import { Pill, BellRing, LockKeyhole, HeartPulse, Utensils, Footprints, TriangleAlert, ChevronDown } from "lucide-react";
 import "./patient-care-guide-page.css";
 
-const categories=["Obat","Perawatan luka","Makan & minum","Aktivitas","Gejala bahaya"] as const;
-type Category=typeof categories[number];
-const guides:Record<Category,{icon:typeof Pill;sections:{title:string;points:string[]}[]}>={
-  "Obat":{icon:Pill,sections:[{title:"Panduan konsumsi obat",points:["Minum obat sesuai nama, dosis, dan waktu pada resep dokter.","Dosis mengikuti resep. Tanyakan kepada perawat sebelum mengubah jadwal atau dosis.","Laporkan keteraturan minum obat melalui Check-in Harian."]},{title:"Pengingat minum obat",points:["Obat A · pukul 08.00 WIB","Obat B · pukul 20.00 WIB","Jika dosis terlewat, ikuti petunjuk pada resep atau tanyakan kepada perawat."]},{title:"Instruksi penyimpanan obat",points:["Simpan obat sesuai petunjuk pada kemasan atau resep.","Jauhkan obat dari jangkauan anak-anak.","Periksa label obat sebelum digunakan."]}]},
+export const guideCategories = ["Obat", "Perawatan luka", "Makan & minum", "Aktivitas", "Gejala bahaya"] as const;
+export type GuideCategory = typeof guideCategories[number];
+const guides: Record<GuideCategory, { icon: typeof Pill; sections: { title: string; points: string[] }[] }> = {
+  "Obat":{icon:Pill,sections:[{title:"Panduan konsumsi obat",points:["Minum obat sesuai nama, dosis, dan waktu pada resep dokter.","Dosis mengikuti resep. Tanyakan kepada perawat sebelum mengubah jadwal atau dosis.","Laporkan keteraturan minum obat melalui Check-in Harian."]},{title:"Pengingat minum obat",points:["Ikuti jadwal minum obat yang tercantum pada resep dokter.","Catat keteraturan minum obat melalui Check-in Harian.","Jika dosis terlewat, ikuti petunjuk pada resep atau tanyakan kepada perawat."]},{title:"Instruksi penyimpanan obat",points:["Simpan obat sesuai petunjuk pada kemasan atau resep.","Jauhkan obat dari jangkauan anak-anak.","Periksa label obat sebelum digunakan."]}]},
   "Perawatan luka":{icon:HeartPulse,sections:[{title:"Menjaga area luka",points:["Ikuti jadwal dan cara perawatan luka yang sudah diberikan dokter atau perawat.","Jaga area sekitar luka tetap bersih dan kering sesuai instruksi perawatan.","Hindari mengoleskan produk lain tanpa arahan tenaga kesehatan."]},{title:"Mengganti balutan",points:["Gunakan perlengkapan yang dianjurkan tenaga kesehatan.","Cuci tangan sebelum dan sesudah melakukan perawatan.","Hubungi perawat bila Anda tidak yakin cara mengganti balutan."]},{title:"Pantau perubahan",points:["Perhatikan perubahan kondisi luka dan sampaikan kepada perawat saat check-in.","Bila kondisi memburuk atau muncul keluhan baru, hubungi tenaga kesehatan."]}]},
   "Makan & minum":{icon:Utensils,sections:[{title:"Panduan makan dan minum",points:["Ikuti anjuran makan dan minum yang diberikan dokter atau ahli gizi.","Catat perubahan nafsu makan atau keluhan saat makan pada check-in harian.","Tanyakan kepada tenaga kesehatan bila memiliki pantangan atau kebutuhan khusus."]},{title:"Membantu menjaga asupan",points:["Pilih waktu makan yang nyaman dan ikuti rencana makan Anda.","Sampaikan kepada perawat jika asupan makan atau minum berkurang."]}]},
   "Aktivitas":{icon:Footprints,sections:[{title:"Aktivitas di rumah",points:["Lakukan aktivitas sesuai kemampuan dan anjuran dokter.","Beristirahat bila merasa lelah atau tidak nyaman.","Mintalah bantuan keluarga bila membutuhkan pendampingan."]},{title:"Jadwal istirahat",points:["Ikuti jadwal istirahat yang membantu pemulihan Anda.","Sampaikan kepada perawat jika aktivitas sehari-hari terasa lebih sulit."]}]},
   "Gejala bahaya":{icon:TriangleAlert,sections:[{title:"Kapan perlu segera mencari bantuan",points:["Hubungi tenaga kesehatan jika kondisi terasa memburuk atau muncul keluhan yang mengkhawatirkan.","Untuk keadaan darurat, segera hubungi layanan darurat setempat atau pergi ke fasilitas kesehatan terdekat.","Jangan menunda mencari bantuan ketika Anda merasa keselamatan terancam."]},{title:"Informasi yang perlu disampaikan",points:["Sampaikan keluhan yang dirasakan, kapan keluhan mulai muncul, dan perubahan kondisi.","Siapkan daftar obat yang sedang dikonsumsi bila tersedia.","Minta keluarga menemani saat menghubungi tenaga kesehatan."]}]}
 };
 
-export function PatientCareGuidePage(){
-  const [category,setCategory]=useState<Category>("Obat");
-  const [expanded,setExpanded]=useState(0);
-  const [menuOpen,setMenuOpen]=useState(false);
-  const active=guides[category];
-  const Icon=active.icon;
-  return <main className="care-guide-app" id={category==="Gejala bahaya"?"bahaya":undefined}>
-    <header className="patient-header"><div className="patient-header-inner"><Link href="/pasien" className="patient-brand" aria-label="ForCare beranda pasien"><Image src="/forcare-brand.png" alt="ForCare" width={215} height={68} priority/></Link><nav className={`patient-nav${menuOpen?" is-open":""}`} aria-label="Navigasi pasien"><Link href="/pasien">Beranda</Link><Link href="/pasien/homecare">Homecare</Link><Link href="/pasien/check-in">Check-in Harian</Link><Link href="/pasien/panduan" className="is-active" aria-current="page">Panduan Perawatan</Link></nav><div className="patient-account"><Link className="patient-bell" href="/pasien/notifikasi" aria-label="Notifikasi"><Bell size={19}/></Link><Link href="/pasien/profil" className="patient-account-profile" aria-label="Buka profil pasien"><span className="patient-avatar">IH</span><span className="patient-account-text"><strong>Ilham S. Hasim</strong><small>RM-2026-001</small></span></Link><button className="patient-menu-button" aria-label={menuOpen?"Tutup menu":"Buka menu"} onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen?<X size={22}/>:<Menu size={22}/>}</button></div></div></header>
-    <div className="care-guide-main"><header className="care-guide-heading"><h1>Panduan Perawatan</h1><p>Panduan umum merawat diri di rumah. Ikuti selalu arahan dokter dan perawat Anda.</p></header><div className="care-guide-tabs" role="tablist" aria-label="Kategori panduan">{categories.map((item)=><button key={item} role="tab" aria-selected={item===category} className={item===category?"active":""} onClick={()=>{setCategory(item);setExpanded(0)}}>{item}</button>)}</div><div className="care-guide-layout"><section className="care-guide-list" aria-label={`Panduan ${category}`}>{active.sections.map((section,index)=>{const open=expanded===index;return <article className={`care-guide-section${open?" open":""}`} key={section.title}><button className="care-guide-toggle" aria-expanded={open} onClick={()=>setExpanded(open?-1:index)}><span className="care-guide-icon">{index===0?<Icon size={20}/>:index===1?<BellRing size={20}/>:<LockKeyhole size={20}/>}</span><strong>{section.title}</strong><ChevronDown className="care-guide-chevron" size={18}/></button>{open&&<ul>{section.points.map((point)=><li key={point}>{point}</li>)}</ul>}</article>})}</section>
-      <aside className="care-guide-aside"><section className="care-upcoming-card"><header>Jadwal terdekat</header><div className="care-upcoming-row"><span><UserRound size={19}/></span><div><strong>Kunjungan perawat</strong><small>Hari ini · 14.00</small></div></div><div className="care-upcoming-row"><span><CalendarDays size={19}/></span><div><strong>Kontrol dokter</strong><small>26 Nov 2026 · 09.00</small></div></div></section><section className="care-help-card"><header><TriangleAlert size={18}/>Perlu bantuan segera?</header><div><a href="tel:081200000100">Hubungi perawat</a></div></section></aside>
-      </div></div>
-  </main>;
+export function GeneralCareGuide({ category }: { category: GuideCategory }) {
+  return <GeneralCareGuideSections key={category} category={category} />;
+}
+
+function GeneralCareGuideSections({ category }: { category: GuideCategory }) {
+  const [expanded, setExpanded] = useState<number | null>(0);
+  const id = useId();
+  const active = guides[category];
+  const Icon = active.icon;
+
+  return (
+    <section className="care-guide-general" aria-label={`Panduan umum: ${category}`}>
+      {active.sections.map((section, index) => {
+        const open = expanded === index;
+        const triggerId = `${id}-trigger-${index}`;
+        const panelId = `${id}-panel-${index}`;
+        return (
+          <article className={`care-guide-section${open ? " open" : ""}`} key={section.title}>
+            <button
+              type="button"
+              className="care-guide-toggle"
+              id={triggerId}
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setExpanded(open ? null : index)}
+            >
+              <span className="care-guide-icon" aria-hidden="true">
+                {index === 0 ? <Icon size={20} /> : index === 1 ? <BellRing size={20} /> : <LockKeyhole size={20} />}
+              </span>
+              <strong>{section.title}</strong>
+              <ChevronDown className="care-guide-chevron" size={18} aria-hidden="true" />
+            </button>
+            <div id={panelId} role="region" aria-labelledby={triggerId} hidden={!open}>
+              <ul>{section.points.map(point => <li key={point}>{point}</li>)}</ul>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
 }

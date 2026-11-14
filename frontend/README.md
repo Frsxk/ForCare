@@ -4,6 +4,10 @@ Frontend Next.js App Router, React, TypeScript, dan Tailwind CSS untuk ruang ker
 
 Visual baseline: `be1814a378b9b8c09ea073fa3e67e04b7b7c2216`. Keep its layouts, component classes, styles, and assets when wiring APIs; presentation changes require owner approval. Authentication retains the text-only wordmark from `41057d3` and the female/male registration options from `b9ab6b3`. Live values replace sample values; unavailable services retain their page structure with explicit empty/unavailable states, never fabricated clinical data or simulated successful writes.
 
+Owner-approved refinements: the care guide presents general educational advice in compact category accordions, with published patient-specific instructions and care notes only when available. General advice is not an individual prescription; medication schedules, appointment dates, and contact numbers are never invented. Guide reload controls appear only for failed requests. Patient and nurse navbar accounts open a profile/logout popover by hover, click/touch, or keyboard; Escape, outside interaction, and focus leaving dismiss it. Logout still uses the shared session controller and preserves uncertain-session recovery.
+
+The patient home follows the approved Figma card layout: session-localized greeting/date, confirmed visit banner, four fixed check-in summary slots, compact patient facts, schedule, medication instructions, shortcuts, and booking progress. Unmeasured values and unavailable discharge/follow-up data remain explicit; complete measurements remain available in check-in history. Booking details use Indonesian event labels and session-localized date/time ranges, with accurate pending/terminal decisions, reasons, and expandable intake/audit/cancellation controls. No medication-taking action or notification delivery is simulated.
+
 Pasien dapat mendaftar sendiri, masuk/keluar, membaca profil dan panduan perawatan aktif, mengubah kontak, membuat/mengoreksi draf check-in, menyerahkan check-in secara eksplisit, serta melihat riwayat dan proyeksi analisis yang sudah dipublikasikan. Pada Stop 4 pasien juga dapat memilih perawat dari direktori aktif, memilih slot yang benar-benar tersedia untuk booking ordinary, mengisi draf skrining homecare, meminta pengecualian waktu secara manual, menyerahkan permintaan, membaca status/riwayat, dan membatalkan sebelum mulai.
 
 Perawat diprovisikan melalui operasi operator, hanya membaca pasien dalam penugasannya, membuat/mengoreksi snapshot medis berversi, serta meninjau, merevisi, menyetujui, dan memublikasikan draf analisis melalui tindakan terpisah. Untuk homecare, setiap perawat menerbitkan ketersediaannya sendiri dan hanya menangani antrean yang memilihnya: menerima/menolak permintaan, membaca jadwal terkonfirmasi, membatalkan, atau menjadwalkan ulang dengan alasan serta persetujuan pasien. Persetujuan ketersediaan prioritas merupakan keputusan manual yang terpisah dari penyerahan dan penerimaan booking.
@@ -75,7 +79,9 @@ Booking, availability, keputusan, jadwal, dan pengecualian prioritas tidak memak
 - `app/login`, `app/daftar`, `app/pasien`, dan route ruang kerja perawat: pembungkus route untuk komponen terautentikasi.
 - `components/auth-pages.tsx`: pendaftaran dan login.
 - `components/session-provider.tsx`: sesi cookie terverifikasi, identitas peran, dan logout.
+- `components/account-popover.tsx`: menu akun navbar pasien/perawat, tautan profil, dan logout melalui pengendali sesi yang sama.
 - `components/patient-live-pages.tsx`: beranda, profil/kontak, check-in, serta panduan pasien.
+- `components/patient-care-guide-page.tsx`: panduan umum edukatif per kategori, terpisah dari instruksi klinis pasien yang diterbitkan.
 - `components/nurse-workspace-provider.tsx`: pembacaan API dan isolasi sumber daya untuk ruang kerja perawat.
 - `components/nurse-workspace-pages.tsx`: daftar/detail pasien penugasan, profil perawat, dan status route belum tersedia.
 - `components/homecare-patient.tsx`: riwayat pasien serta draf, skrining, pemilihan perawat/slot, pengajuan, pembatalan, dan prioritas.
@@ -84,6 +90,7 @@ Booking, availability, keputusan, jadwal, dan pengecualian prioritas tidak memak
 - `components/patient-analysis.tsx`: pembuatan draf, polling terbatas, revisi, tinjauan, persetujuan, dan publikasi terpisah.
 - `lib/api/`: transport same-origin dan klien akun pasien, perawat, check-in, panduan, analisis, serta homecare.
 - `lib/api/proxy.ts`: definisi satu rewrite `/api/v1/:path*` yang digunakan oleh `next.config.ts`.
+- `lib/patient-homecare-display.ts`: label status/peristiwa pengajuan dan format tanggal/jam menurut zona waktu sesi pasien.
 - `app/globals.css` dan stylesheet komponen: tema, tata letak, serta breakpoint responsif.
 
 Sejumlah komponen, provider, dan file data mock awal seperti `components/nurse-data-provider.tsx`, `lib/dashboard-data.ts`, dan `lib/visit-data.ts` dipertahankan sebagai sumber referensi yang tidak dipakai oleh route produk aktif. Isi file tersebut bukan indikator fitur yang tersedia, bukan penyimpanan runtime, dan bukan backend.

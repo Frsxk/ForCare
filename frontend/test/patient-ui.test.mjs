@@ -19,7 +19,6 @@ test("live shell uses server patient identity with responsive teammate classes a
  assert.match(html, /Nama Aman Server/); assert.match(html, /RM-SERVER/); assert.match(html, /LIVE_CHILD/); assert.match(html, /patient-header-inner/); assert.match(html, /patient-nav/); assert.match(html, /aria-label="Buka menu"/); assert.match(html, /href="\/pasien\/check-in"/); assert.match(html, /aria-current="page"/);
  assert.doesNotMatch(html, /Ilham|Dinda|HC-0014|Obat A|internalNote|inputSnapshot|risiko tinggi/);
  assert.match(html, /images%2Fforcare-brand.png|\/images\/forcare-brand.png/);
- assert.match(html, />Keluar<\/button>/);
 });
 for (const section of ["homecare", "booking", "notifications"]) test(`${section} is explicitly unavailable with no fake saves or editable fixtures`, () => {
  const html = renderToStaticMarkup(createElement(PatientUnavailable, { section })); assert.match(html, /belum tersedia/);
@@ -87,17 +86,6 @@ test("patient core shell restores section-specific geometry without duplicate bo
   const html = renderToStaticMarkup(createElement(SessionProvider, { controller }, createElement(PatientLiveShell, { section, profile }, createElement("p", null, "BOOKING_CONTENT"))));
   assert.match(html, /BOOKING_CONTENT/); assert.doesNotMatch(html, /class="patient-main"|patient-welcome|<h1/);
  }
-});
-test("live guide restores the five original tabs and two-column content geometry", async () => {
- const controller = await authenticatedController();
- const { getPatientWorkspace } = await import("../lib/api/workspaces");
- await getPatientWorkspace(controller).profile.load(async () => profile);
- const html = renderToStaticMarkup(createElement(SessionProvider, { controller }, createElement(PatientWorkspaceProvider, null, createElement(PatientLivePage, { section: "guide" }))));
- assert.deepEqual([...html.matchAll(/role="tab"[^>]*>([^<]+)<\/button>/g)].map(match => match[1].replaceAll("&amp;", "&")), ["Obat", "Perawatan luka", "Makan & minum", "Aktivitas", "Gejala bahaya"]);
- assert.match(html, /role="tab" aria-selected="true" class="active">Obat/);
- for (const className of ["care-guide-tabs", "care-guide-layout", "care-guide-list", "care-guide-aside", "care-upcoming-card", "care-help-card"]) assert.ok(html.includes(`class="${className}"`));
- assert.match(html, />Analisis<\/h2>/);
- assert.match(html, />Muat ulang analisis<\/button>/);
 });
 const typedGuide = {
  patientId: profile.id,

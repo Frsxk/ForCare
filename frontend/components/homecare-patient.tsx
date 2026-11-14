@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Plus } from "lucide-react";
+import { ArrowLeft, Check, Info, Plus } from "lucide-react";
 import { useCallback, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { usePatientRead, usePatientWorkspace } from "./patient-workspace-provider";
 import { measurementUnits, type MeasurementType, type PatientProfile, type NurseDirectory } from "@/lib/api/patient";
 import { prepareBookingCancellation, prepareBookingCreate, prepareBookingSubmit, prepareBookingUpdate, preparePriorityRequestCreate, type AvailabilitySlot, type BookingIntake, type BookingStatus, type HomecareBooking, type HomecareWriteController, type HomecareWriteState, type PriorityRequest } from "@/lib/api/homecare";
+import { formatPatientDate, formatPatientDateTime, formatPatientTime, patientBookingEventLabel, patientBookingStatusLabels } from "@/lib/patient-homecare-display";
 import "./patient-homecare-page.css";
 import "./homecare-booking-flow.css";
 
@@ -82,7 +83,6 @@ const measurementNames: Record<MeasurementType, string> = { temperature_c: "Suhu
 const measurementDisplayUnits: Record<MeasurementType, string> = { temperature_c: "°C", heart_rate_bpm: "bpm", bp_systolic_mmhg: "mmHg", bp_diastolic_mmhg: "mmHg", weight_kg: "kg", spo2_pct: "%" };
 const conditionNames = { pale: "Tampak pucat", weak: "Lemas", cold_sweat: "Berkeringat dingin", none: "Tidak ada keluhan fisik" } as const;
 const consciousnessNames = { alert: "Sadar penuh", drowsy: "Mengantuk / kurang waspada", confused: "Bingung" } as const;
-const statusNames: Record<BookingStatus, string> = { draft: "Draf", submitted: "Menunggu konfirmasi", accepted: "Diterima", rejected: "Ditolak", cancelled: "Dibatalkan" };
 const tabs: { value: BookingStatus | "all"; label: string }[] = [{ value: "all", label: "Semua" }, { value: "draft", label: "Draf" }, { value: "submitted", label: "Menunggu" }, { value: "accepted", label: "Diterima" }, { value: "rejected", label: "Ditolak" }, { value: "cancelled", label: "Dibatalkan" }];
 const emptyForm = (): PatientHomecareForm => ({ complaint: "", otherComplaint: "", history: "", consciousness: null, conditions: [], values: {}, observationTimes: {}, note: "" });
 export const formFor = (intake: BookingIntake | null): PatientHomecareForm => intake ? ({ complaint: intake.complaint, otherComplaint: intake.otherComplaint ?? "", history: intake.history ?? "", consciousness: intake.consciousness, conditions: intake.conditions, values: Object.fromEntries(intake.observations.map(item => [item.type, String(item.value)])), observationTimes: Object.fromEntries(intake.observations.map(item => [item.type, item.observedAt.slice(0, 16)])), note: intake.note ?? "" }) : emptyForm();
@@ -100,7 +100,6 @@ export function intakeFor(form: PatientHomecareForm, consent: boolean, old?: Hom
   return { complaint, otherComplaint: form.otherComplaint.trim() || null, history: form.history.trim() || null, consciousness: form.consciousness, conditions: form.conditions, observations, note: form.note.trim() || null, consent };
 }
 function value(value: string | null | undefined) { return value?.trim() || "Belum dicatat"; }
-function time(value: string | null) { return value ? `${value} (UTC)` : "Belum tersedia"; }
 function displayGender(gender: string) { return gender === "male" ? "Laki-laki" : gender === "female" ? "Perempuan" : gender; }
 function Field({ label, children, className = "" }: { label: ReactNode; children: ReactNode; className?: string }) { return <label className={`booking-field ${className}`}><strong>{label}</strong>{children}</label>; }
 function Detail({ label, children }: { label: string; children: ReactNode }) { return <div className="homecare-detail-item"><small>{label}</small><strong>{children}</strong></div>; }
@@ -122,6 +121,48 @@ export function HomecareWriteNotice({ writer, reload }: { writer: HomecareWriteC
   if (state.status === "sending") return <p className="patient-live-message" role="status">Menunggu konfirmasi server…</p>;
   if (state.status === "verified") return <div className="patient-live-message" role="status"><p>Perubahan telah diverifikasi dengan membaca kembali server.</p><button type="button" onClick={() => { writer.reset(); attempt(Promise.resolve()); }}>Muat data terbaru</button>{error && <p role="alert">{error}</p>}</div>;
   return <div className="patient-live-message" role="alert"><p>{state.status === "uncertain" ? "Hasil pengiriman belum pasti. Jangan membuat pengganti; isian dan identitas permintaan tetap disimpan selama sesi ini, termasuk setelah berpindah halaman." : "Permintaan ditolak. Muat ulang data dan periksa versi sebelum memperbaiki isian."}</p>{state.error && <p>{state.error.message}</p>}<div className="patient-live-actions">{state.status === "uncertain" ? <><button type="button" onClick={() => attempt(writer.reconcile())}>Periksa hasil (tanpa mengirim)</button><button type="button" onClick={() => attempt(writer.send(state.operation))}>Kirim ulang permintaan yang sama</button></> : <button type="button" onClick={() => { writer.reset(); attempt(Promise.resolve()); }}>Muat ulang data</button>}</div>{error && <p role="alert">{error}</p>}<p><small>Muat ulang tidak mengganti operasi yang tertahan. Pencarian daftar tidak digunakan untuk menebak ID entitas baru.</small></p></div>;
+}
+
+function bookingInterval(startsAt: string, endsAt: string, timeZone: string) {
+  return `${formatPatientDateTime(startsAt, timeZone)} – ${formatPatientDate(startsAt, timeZone) === formatPatientDate(endsAt, timeZone) ? formatPatientTime(endsAt, timeZone) : formatPatientDateTime(endsAt, timeZone)}`;
+}
+
+function BookingEventSchedule({ event, timeZone }: { event: HomecareBooking["events"][number]; timeZone: string }) {
+  if (event.action !== "booking.rescheduled") return null;
+  const { startsAt, endsAt, previousStartsAt, previousEndsAt } = event.data;
+  return <>{typeof previousStartsAt === "string" && typeof previousEndsAt === "string" && <small>Sebelumnya: {bookingInterval(previousStartsAt, previousEndsAt, timeZone)}</small>}{typeof startsAt === "string" && typeof endsAt === "string" && <small>Jadwal baru: {bookingInterval(startsAt, endsAt, timeZone)}</small>}</>;
+}
+
+export function PatientBookingTimeline({ booking, timeZone }: { booking: HomecareBooking; timeZone: string }) {
+  const events = [...booking.events].sort((a, b) => a.version - b.version);
+  const visible = events.filter(event => !["booking.created", "booking.updated"].includes(event.action));
+  const decisionAction = `booking.${booking.status}`;
+  const hasDecision = visible.some(event => event.action === decisionAction);
+  const terminal = ["accepted", "rejected", "cancelled"].includes(booking.status);
+  const submitted = visible.some(event => event.action === "booking.submitted");
+  return <ol className="request-timeline" aria-label="Linimasa dan keputusan">
+    {!submitted && booking.submittedAt && <li className="complete"><span aria-hidden="true"><Check size={14} /></span><div><strong>{patientBookingEventLabel("booking.submitted")}</strong><small>{formatPatientDateTime(booking.submittedAt, timeZone)}</small></div></li>}
+    {visible.map(event => {
+      const reason = event.reason ?? (event.action === decisionAction ? booking.decisionReason : null);
+      return <li key={event.id} className="complete"><span aria-hidden="true"><Check size={14} /></span><div><strong>{patientBookingEventLabel(event.action)}</strong><small>{formatPatientDateTime(event.createdAt, timeZone)}</small>{reason && <small className="booking-event-reason">{reason}</small>}<BookingEventSchedule event={event} timeZone={timeZone} /></div></li>;
+    })}
+    {terminal && !hasDecision && <li className="complete"><span aria-hidden="true"><Check size={14} /></span><div><strong>{patientBookingEventLabel(decisionAction)}</strong>{(booking.status === "cancelled" ? booking.cancelledAt : booking.decidedAt) && <small>{formatPatientDateTime((booking.status === "cancelled" ? booking.cancelledAt : booking.decidedAt)!, timeZone)}</small>}{booking.decisionReason && <small className="booking-event-reason">{booking.decisionReason}</small>}</div></li>}
+    {booking.status === "draft" && <li className="current" aria-current="step"><span aria-hidden="true" /><div><strong>Draf belum dikirim</strong><small>Lanjutkan draf untuk mengajukan kunjungan.</small></div></li>}
+    {booking.status === "submitted" && <><li className="current" aria-current="step"><span aria-hidden="true" /><div><strong>Menunggu tinjauan perawat</strong><small>Menunggu konfirmasi</small></div></li><li className="upcoming"><span aria-hidden="true" /><div><strong>Keputusan perawat</strong><small>Belum ada keputusan</small></div></li></>}
+  </ol>;
+}
+
+export function PatientBookingDetail({ booking, timeZone, children }: { booking: HomecareBooking; timeZone: string; children?: ReactNode }) {
+  return <aside className="homecare-detail-card"><div className="homecare-detail-heading"><h2>Detail pengajuan</h2><span className={`homecare-status-label ${booking.status}`}>{patientBookingStatusLabels[booking.status]}</span></div><div className="homecare-detail-content">
+    <div className="homecare-detail-facts"><Detail label="Jadwal yang diminta">{bookingInterval(booking.startsAt, booking.endsAt, timeZone)}</Detail><Detail label="Perawat">{booking.nurse.displayName} ({booking.nurse.staffCode})</Detail></div>
+    <PatientBookingTimeline booking={booking} timeZone={timeZone} />
+    {booking.status === "submitted" && <p className="homecare-notice"><Info size={20} aria-hidden="true" /><span>Keputusan perawat akan ditampilkan di sini.</span></p>}
+    <details className="homecare-booking-disclosure"><summary>Detail dan riwayat pengajuan</summary><Detail label="ID pengajuan">{booking.id}</Detail><Detail label="Versi">{booking.version}</Detail><Detail label="Interval lengkap">{formatPatientDateTime(booking.startsAt, timeZone)} – {formatPatientDateTime(booking.endsAt, timeZone)}</Detail>
+      <BookingIntakeView intake={booking.intake} timeZone={timeZone} />
+      <ol className="homecare-audit-history" aria-label="Riwayat lengkap">{[...booking.events].sort((a, b) => a.version - b.version).map(event => <li key={event.id}><strong>{patientBookingEventLabel(event.action)}</strong><small>{formatPatientDateTime(event.createdAt, timeZone)} · Versi {event.version}</small>{event.reason && <p>{event.reason}</p>}<BookingEventSchedule event={event} timeZone={timeZone} /></li>)}</ol>
+    </details>
+    {children}
+  </div></aside>;
 }
 
 export function HomecareHistory({ profile }: { profile: PatientProfile }) {
@@ -169,23 +210,21 @@ export function HomecareHistory({ profile }: { profile: PatientProfile }) {
     <HomecareWriteNotice writer={writer} reload={reload} />
     <div className="homecare-tabs" role="tablist" aria-label="Filter status pengajuan">{tabs.map(tab => <button key={tab.value} type="button" role="tab" aria-selected={filter === tab.value} className={filter === tab.value ? "active" : ""} onClick={() => { setFilter(tab.value); setCursor(null); setSelectedId(null); }}>{tab.label}</button>)}</div>
     {state.status !== "ready" ? <ReadState state={state} retry={reload} /> : <div className="patient-homecare-layout">
-      <section className="homecare-request-list" aria-label="Daftar pengajuan homecare">{!state.data.items.length && <p className="homecare-empty">Belum ada pengajuan pada kategori ini.</p>}{state.data.items.map(item => <button key={item.id} type="button" aria-pressed={selectedBookingId === item.id} className={`homecare-request-row${selectedBookingId === item.id ? " selected" : ""}`} onClick={() => { setSelectedId(item.id); setError(""); }}><span><strong>{item.status === "draft" ? "Draf pengajuan" : `${item.id} · Kunjungan homecare`}</strong><small>{item.startsAt} – {item.endsAt} (UTC) · {item.nurse.displayName}</small></span><b className={`homecare-status-label ${item.status}`}>{statusNames[item.status]}</b></button>)}</section>
-      {selected && <aside className="homecare-detail-card"><div className="homecare-detail-heading"><h2>Detail pengajuan</h2><span className={`homecare-status-label ${selected.status}`}>{statusNames[selected.status]}</span></div><div className="homecare-detail-content">
-        <Detail label="Jadwal yang diminta">{selected.startsAt} – {selected.endsAt} (UTC)</Detail><Detail label="Perawat">{selected.nurse.displayName} ({selected.nurse.staffCode})</Detail><Detail label="Versi">{selected.version}</Detail><Detail label="Alasan keputusan / pembatalan">{value(selected.decisionReason)}</Detail>
-        {selected.priorityRequestId && <HomecarePriorityStatus requestId={selected.priorityRequestId} />}<BookingIntakeView intake={selected.intake} />
-        <h3>Linimasa dan keputusan</h3><ol className="request-timeline">{selected.events.map(event => <li key={event.id} className="complete"><span /><div><strong>{event.action} · versi {event.version}</strong><small>{time(event.createdAt)}</small>{event.reason && <small>{event.reason}</small>}</div></li>)}{!selected.events.length && <li className="current"><span /><div><strong>Belum ada peristiwa tercatat</strong></div></li>}</ol>
+      <section className="homecare-request-list" aria-label="Daftar pengajuan homecare">{!state.data.items.length && <p className="homecare-empty">Belum ada pengajuan pada kategori ini.</p>}{state.data.items.map(item => <button key={item.id} type="button" aria-pressed={selectedBookingId === item.id} className={`homecare-request-row${selectedBookingId === item.id ? " selected" : ""}`} onClick={() => { setSelectedId(item.id); setError(""); }}><span><strong>{item.status === "draft" ? "Draf pengajuan" : "Kunjungan homecare"}</strong><small>{bookingInterval(item.startsAt, item.endsAt, scope.session.displayTimeZone)} · {item.nurse.displayName}</small><small className="homecare-booking-id">ID: {item.id}</small></span><b className={`homecare-status-label ${item.status}`}>{patientBookingStatusLabels[item.status]}</b></button>)}</section>
+      {selected && <PatientBookingDetail booking={selected} timeZone={scope.session.displayTimeZone}>
+        {selected.priorityRequestId && <HomecarePriorityStatus requestId={selected.priorityRequestId} />}
         {selected.status === "draft" && <Link className="patient-primary-button" href={`/pasien/homecare/pesan?draft=${selected.id}`}>Lanjutkan draf</Link>}
-        {["draft", "submitted", "accepted"].includes(selected.status) && Date.parse(selected.startsAt) > now && <form className="homecare-cancel-form" onSubmit={cancel}><label>Alasan pembatalan<textarea required maxLength={4000} value={reason} onChange={event => setReason(event.target.value)} /></label><button disabled={locked} type="submit">Batalkan pengajuan sebelum kunjungan</button></form>}
-      </div></aside>}
+        {["draft", "submitted", "accepted"].includes(selected.status) && Date.parse(selected.startsAt) > now && <details className="homecare-booking-disclosure"><summary>Batalkan pengajuan</summary><form className="homecare-cancel-form" onSubmit={cancel}><label>Alasan pembatalan<textarea required maxLength={4000} value={reason} onChange={event => setReason(event.target.value)} /></label><button disabled={locked} type="submit">Batalkan pengajuan sebelum kunjungan</button></form></details>}
+      </PatientBookingDetail>}
       {selectedBookingId && !selected && <aside className="homecare-detail-card"><div className="homecare-detail-heading"><h2>Detail pengajuan</h2></div><div className="homecare-detail-content"><ReadState state={detailRead.state} retry={detailRead.reload} /></div></aside>}
     </div>}
     {error && <p role="alert">{error}</p>}<div className="patient-live-actions"><button type="button" disabled={locked} onClick={() => void reload()}>Muat ulang riwayat</button>{cursor && <button type="button" onClick={() => { setCursor(null); setSelectedId(null); }}>Kembali ke terbaru</button>}{state.status === "ready" && state.data.page.hasMore && <button type="button" onClick={() => { setCursor(state.data.page.nextCursor); setSelectedId(null); }}>Pengajuan berikutnya</button>}</div>
     <p className="homecare-help">ForCare is not an emergency-response service. If you need urgent help, contact local emergency services.</p>
   </div>;
 }
-function BookingIntakeView({ intake }: { intake: BookingIntake | null }) {
+function BookingIntakeView({ intake, timeZone }: { intake: BookingIntake | null; timeZone: string }) {
   if (!intake) return <p>Detail intake tidak tersedia pada status atau akses saat ini.</p>;
-  return <details><summary>Lihat isi intake</summary><dl className="homecare-intake-details"><ReviewItem label="Keluhan utama">{intake.complaint}</ReviewItem><ReviewItem label="Keluhan tambahan">{value(intake.otherComplaint)}</ReviewItem><ReviewItem label="Riwayat kondisi harian">{value(intake.history)}</ReviewItem><ReviewItem label="Kesadaran">{intake.consciousness ? consciousnessNames[intake.consciousness] : "Belum dicatat"}</ReviewItem><ReviewItem label="Kondisi fisik">{intake.conditions.length ? intake.conditions.map(item => conditionNames[item]).join(", ") : "Belum dicatat"}</ReviewItem><ReviewItem label="Catatan untuk perawat">{value(intake.note)}</ReviewItem><ReviewItem label="Persetujuan">{intake.consent ? "Diberikan" : "Belum diberikan"}</ReviewItem>{intake.observations.map(item => <ReviewItem key={item.type} label={measurementNames[item.type]}>{item.value} {measurementDisplayUnits[item.type]} · {time(item.observedAt)}</ReviewItem>)}</dl></details>;
+  return <details><summary>Lihat isi intake</summary><dl className="homecare-intake-details"><ReviewItem label="Keluhan utama">{intake.complaint}</ReviewItem><ReviewItem label="Keluhan tambahan">{value(intake.otherComplaint)}</ReviewItem><ReviewItem label="Riwayat kondisi harian">{value(intake.history)}</ReviewItem><ReviewItem label="Kesadaran">{intake.consciousness ? consciousnessNames[intake.consciousness] : "Belum dicatat"}</ReviewItem><ReviewItem label="Kondisi fisik">{intake.conditions.length ? intake.conditions.map(item => conditionNames[item]).join(", ") : "Belum dicatat"}</ReviewItem><ReviewItem label="Catatan untuk perawat">{value(intake.note)}</ReviewItem><ReviewItem label="Persetujuan">{intake.consent ? "Diberikan" : "Belum diberikan"}</ReviewItem>{intake.observations.map(item => <ReviewItem key={item.type} label={measurementNames[item.type]}>{item.value} {measurementDisplayUnits[item.type]} · {formatPatientDateTime(item.observedAt, timeZone)}</ReviewItem>)}</dl></details>;
 }
 export function HomecareBookingFlow({ profile }: { profile: PatientProfile }) {
   const { api, homecare, homecareWrites, scope } = usePatientWorkspace();

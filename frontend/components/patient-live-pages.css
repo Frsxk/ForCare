@@ -29,4 +29,79 @@
 .patient-live-app .profile-signout button{width:100%;height:44px;background:transparent;color:inherit;border:0;font-weight:700;cursor:pointer}
 .patient-live-app .contact-edit-main fieldset>.patient-live-actions{justify-content:flex-end}
 @media(max-width:1040px){.patient-live-app .patient-account-text{display:none}.patient-live-app .patient-header-inner{grid-template-columns:auto 1fr auto}.patient-live-app .patient-nav{justify-self:center;gap:18px}.patient-live-app .patient-bell{margin-right:0}}
-@media(max-width:760px){.patient-live-app .patient-header-inner{grid-template-columns:1fr auto}.patient-live-app .patient-account{grid-column:2;grid-row:1;gap:7px}.patient-live-app .patient-nav.is-open{display:flex;z-index:20}.patient-live-app .patient-menu-button{display:grid}.patient-live-app .patient-live-padding{padding:16px}.patient-live-app .patient-account .live-session-actions button{padding:6px;font-size:12px}}
+@media(max-width:760px){.patient-live-app .patient-header-inner{grid-template-columns:1fr auto}.patient-live-app .patient-account{grid-column:2;grid-row:1;gap:7px}.patient-live-app .patient-nav.is-open{display:flex;z-index:20}.patient-live-app .patient-menu-button{display:grid}.patient-live-app .patient-live-padding{padding:16px}}
+.care-guide-app .care-guide-status{padding:14px 22px;color:#1f846d;font-size:13px}
+.care-guide-app .care-guide-published-heading{padding:18px 22px 12px;border-top:1px solid #c3eee4;font-size:14px;font-weight:700}
+.care-guide-app .care-guide-published>small{display:block;padding:0 22px 10px;color:#1f846d}
+.care-guide-app .care-guide-list>.patient-live-message{margin:16px}
+.care-guide-app .care-help-card p{font-size:13px;line-height:1.5}
+.care-guide-app .care-help-card small{display:block;margin-top:8px;font-size:12px;color:#1f846d}
+.patient-live-app.patient-dashboard-app .patient-main{max-width:1091px}
+.patient-live-app.patient-dashboard-app .patient-welcome{gap:24px;align-items:center}
+.patient-live-app.patient-dashboard-app .patient-welcome>div{min-width:0}
+.patient-live-app.patient-dashboard-app .patient-welcome h1{font-size:30px;line-height:36px;letter-spacing:-.6px;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .patient-welcome p{margin-top:13px;font-size:14.5px;line-height:22.48px;color:#176352}
+.patient-live-app.patient-dashboard-app .patient-welcome .patient-primary-button{height:44px;background:#3cc8a8;font-size:14.5px}
+.patient-live-app.patient-dashboard-app .patient-dashboard-grid{grid-template-columns:minmax(0,684fr) minmax(0,340fr);gap:28px}
+.patient-live-app.patient-dashboard-app .patient-primary-column,.patient-live-app.patient-dashboard-app .patient-side-column{min-width:0;gap:20px}
+.patient-live-app.patient-dashboard-app .nurse-visit-banner{background:#2aa78b;padding:27px 29px;gap:28px}
+.patient-live-app.patient-dashboard-app .banner-time{padding-right:29px}
+.patient-live-app.patient-dashboard-app .banner-time strong{font-size:52px;line-height:52px;letter-spacing:-1.56px}
+.patient-live-app.patient-dashboard-app .banner-copy{min-width:0;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .banner-copy h2{line-height:31px}
+.patient-live-app.patient-dashboard-app .banner-copy p{font-size:14.5px;line-height:22.48px}
+.patient-live-app.patient-dashboard-app .banner-contact{min-height:44px;display:inline-flex;align-items:center;padding:10px 16px;font-size:14px;white-space:nowrap}
+.patient-live-app.patient-dashboard-app .patient-card{border-radius:12px;box-shadow:0 4px 3px #173f3326}
+.patient-live-app.patient-dashboard-app .patient-card-heading{padding:16px 22px;min-height:57px;background:rgba(31,132,109,.7)}
+.patient-live-app.patient-dashboard-app .patient-card-heading.mint{background:rgba(152,226,209,.5)}
+.patient-live-app.patient-dashboard-app .patient-card-heading.pale-mint{background:rgba(152,226,209,.8)}
+.patient-live-app.patient-dashboard-app .dashboard-checkin-summary{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:4px;font-size:12px;line-height:18.6px;color:#1f846d;text-align:right}
+.patient-live-app.patient-dashboard-app .dashboard-checkin-summary strong{font-size:12px}
+.patient-live-app.patient-dashboard-app .last-checkin .patient-card-heading h2{flex-shrink:0}
+.patient-live-app.patient-dashboard-app .last-checkin .vitals-list{grid-template-columns:repeat(4,minmax(0,1fr));padding:29px 22px;gap:12px}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-item{gap:10px}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-item>div{min-width:0}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-icon{width:42px;height:42px;border-radius:12px;background:#fff4d6}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-item:nth-child(3) .vital-icon{background:#fce7e4}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-item small{font-size:12px;line-height:18.6px;white-space:normal}
+.patient-live-app.patient-dashboard-app .last-checkin .vital-item strong{display:block;font-size:22px;line-height:26.4px;white-space:normal;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .dashboard-empty-checkin{padding:0 22px 18px;font-size:13px;color:#1f846d}
+.patient-live-app.patient-dashboard-app .dashboard-empty-checkin a{font-weight:700;text-decoration:underline}
+.patient-live-app.patient-dashboard-app .schedule-item{min-height:74px;padding:14px 0;margin:0 20px}
+.patient-live-app.patient-dashboard-app .schedule-item>div{min-width:0;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .schedule-link{display:inline-flex;align-items:center;gap:2px}
+.patient-live-app.patient-dashboard-app .homecare-status{box-shadow:none}
+.patient-live-app.patient-dashboard-app .homecare-status-heading{min-height:67px;gap:12px}
+.patient-live-app.patient-dashboard-app .homecare-status-heading h2{min-width:0}
+.patient-live-app.patient-dashboard-app .homecare-status-heading a{flex-shrink:0}
+.patient-live-app.patient-dashboard-app .homecare-steps{list-style:none;padding:20px 22px}
+.patient-live-app.patient-dashboard-app .homecare-steps li{min-height:63px;padding-bottom:18px}
+.patient-live-app.patient-dashboard-app .homecare-steps li:last-child{min-height:22px;padding-bottom:0}
+.patient-live-app.patient-dashboard-app .homecare-steps li:not(:last-child):before{background:#e6e0d5}
+.patient-live-app.patient-dashboard-app .homecare-steps li>span{border-color:#cfc8ba}
+.patient-live-app.patient-dashboard-app .homecare-steps li.step-complete>span{background:#17784f;border-color:#17784f}
+.patient-live-app.patient-dashboard-app .homecare-steps li.step-current>span{border-color:#1f846d}
+.patient-live-app.patient-dashboard-app .homecare-steps li.step-terminal>span{border-color:#a04c36;background:#fce7e4}
+.patient-live-app.patient-dashboard-app .homecare-steps li>div{min-width:0;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .homecare-steps li strong{font-size:14.5px;line-height:22.48px}
+.patient-live-app.patient-dashboard-app .homecare-steps li small{line-height:20.15px}
+.patient-live-app.patient-dashboard-app .mini-profile{padding:20px 22px 16px}
+.patient-live-app.patient-dashboard-app .mini-profile>div{min-width:0;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .mini-profile strong{font-size:14.5px;line-height:22.48px}
+.patient-live-app.patient-dashboard-app .mini-profile small{line-height:18.6px}
+.patient-live-app.patient-dashboard-app .profile-info{padding:0 22px 20px;gap:14px 24px}
+.patient-live-app.patient-dashboard-app .profile-info-item{min-width:0}
+.patient-live-app.patient-dashboard-app .profile-info-item small{font-size:12px;line-height:18.6px;white-space:normal}
+.patient-live-app.patient-dashboard-app .profile-info-item strong{font-size:14.5px;line-height:22.48px;font-weight:600;white-space:normal;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .patient-card-heading.medication-heading{background:rgba(255,201,60,.5);color:#16324f}
+.patient-live-app.patient-dashboard-app .medication-row{padding:14px 0;align-items:flex-start}
+.patient-live-app.patient-dashboard-app .dashboard-medication-empty{padding:12px 0 4px;font-size:13px;color:#1f846d}
+.patient-live-app.patient-dashboard-app .medication-note{line-height:18px}
+.patient-live-app.patient-dashboard-app .shortcut-row{padding:14px 22px}
+.patient-live-app.patient-dashboard-app .shortcut-row>div{min-width:0;flex:1;overflow-wrap:anywhere}
+.patient-live-app.patient-dashboard-app .shortcut-row>span.warning-shortcut{background:#fce7e4;color:#855304}
+.patient-live-app.patient-dashboard-app .shortcut-chevron{flex-shrink:0;color:#1f846d}
+@media(min-width:1000px) and (max-width:1120px){.patient-live-app.patient-dashboard-app .nurse-visit-banner{padding:22px;gap:18px}.patient-live-app.patient-dashboard-app .banner-time{padding-right:18px}.patient-live-app.patient-dashboard-app .last-checkin .vitals-list{padding-inline:16px;gap:8px}.patient-live-app.patient-dashboard-app .last-checkin .vital-item{gap:6px}.patient-live-app.patient-dashboard-app .last-checkin .vital-item strong{font-size:20px}}
+@media(max-width:999px){.patient-live-app.patient-dashboard-app .patient-dashboard-grid{grid-template-columns:minmax(0,1fr)}.patient-live-app.patient-dashboard-app .patient-side-column{grid-template-columns:repeat(2,minmax(0,1fr))}.patient-live-app.patient-dashboard-app .shortcuts{grid-column:1/-1}}
+@media(max-width:700px){.patient-live-app.patient-dashboard-app .patient-welcome{align-items:flex-start;flex-wrap:wrap;gap:16px}.patient-live-app.patient-dashboard-app .patient-welcome h1{font-size:25px;line-height:32px}.patient-live-app.patient-dashboard-app .patient-welcome p{margin-top:8px}.patient-live-app.patient-dashboard-app .nurse-visit-banner{grid-template-columns:auto minmax(0,1fr);padding:22px 20px;gap:14px}.patient-live-app.patient-dashboard-app .banner-time{padding-right:18px}.patient-live-app.patient-dashboard-app .banner-time strong{font-size:44px;line-height:48px}.patient-live-app.patient-dashboard-app .banner-copy h2{font-size:17px;line-height:24px}.patient-live-app.patient-dashboard-app .banner-copy p{font-size:13px;line-height:20px}.patient-live-app.patient-dashboard-app .banner-contact{grid-column:2;justify-self:start}.patient-live-app.patient-dashboard-app .patient-card-heading{padding:16px;flex-wrap:wrap;gap:6px}.patient-live-app.patient-dashboard-app .dashboard-checkin-summary{justify-content:flex-start;text-align:left}.patient-live-app.patient-dashboard-app .last-checkin .vitals-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px;padding:24px 16px}.patient-live-app.patient-dashboard-app .last-checkin .vital-item{gap:10px}.patient-live-app.patient-dashboard-app .last-checkin .vital-item strong{font-size:22px}.patient-live-app.patient-dashboard-app .patient-side-column{grid-template-columns:minmax(0,1fr)}.patient-live-app.patient-dashboard-app .schedule-item{flex-wrap:wrap;gap:10px}.patient-live-app.patient-dashboard-app .schedule-badge{margin-left:52px}.patient-live-app.patient-dashboard-app .homecare-status-heading{padding-inline:16px}.patient-live-app.patient-dashboard-app .homecare-steps{padding-inline:16px}}
+@media(max-width:380px){.patient-live-app.patient-dashboard-app .last-checkin .vital-item{gap:8px}.patient-live-app.patient-dashboard-app .last-checkin .vital-item strong{font-size:19px}.patient-live-app.patient-dashboard-app .last-checkin .vital-icon{width:36px;height:36px}.patient-live-app.patient-dashboard-app .homecare-status-heading{flex-wrap:wrap}.patient-live-app.patient-dashboard-app .banner-time{padding-right:12px}.patient-live-app.patient-dashboard-app .nurse-visit-banner{padding:20px 16px;gap:12px}}

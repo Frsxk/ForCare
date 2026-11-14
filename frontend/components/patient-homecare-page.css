@@ -2,3 +2,40 @@
 @media(max-width:900px){.patient-homecare-app .patient-header-inner{grid-template-columns:auto 1fr auto}.patient-homecare-app .patient-nav{justify-self:center;gap:20px}.patient-homecare-app .patient-account-text{display:none}.patient-homecare-app .patient-bell{margin-right:0}}
 @media(max-width:700px){.patient-homecare-main{margin-top:25px;padding:0 16px}.patient-homecare-heading{align-items:flex-start;gap:12px}.patient-homecare-heading h1{font-size:25px}.patient-homecare-heading p{font-size:14px}.patient-homecare-heading .patient-primary-button{padding:10px 12px;font-size:13px}.patient-homecare-layout{grid-template-columns:1fr;gap:18px}.homecare-tabs{overflow-x:auto;margin-bottom:18px}.homecare-tabs button{min-width:auto;padding-inline:13px;white-space:nowrap}.homecare-request-row{padding:13px 15px;gap:12px}.homecare-request-row strong{font-size:14px}.homecare-request-row small{font-size:12px}.homecare-status-label{font-size:12px}.patient-homecare-app .patient-header-inner{padding:0 16px;grid-template-columns:1fr auto}.patient-homecare-app .patient-brand img{width:126px}.patient-homecare-app .patient-nav{display:none;position:absolute;top:70px;left:0;right:0;z-index:5;padding:14px 20px;background:white;box-shadow:0 6px 12px #1232;align-items:stretch;gap:0}.patient-homecare-app .patient-nav.is-open{display:grid}.patient-homecare-app .patient-nav a{padding:12px 4px;border-bottom:1px solid #e3f1ed}.patient-homecare-app .patient-account{grid-column:2;grid-row:1}.patient-homecare-app .patient-menu-button{display:grid;place-items:center;margin-left:6px}.patient-homecare-app .patient-avatar:not(.large){width:34px;height:34px}.patient-homecare-app .patient-account{gap:7px}.patient-homecare-app .patient-bell{width:38px;height:38px}}
 @media(max-width:410px){.patient-homecare-heading{display:grid}.patient-homecare-heading .patient-primary-button{justify-self:start}.homecare-request-row{align-items:flex-start}.homecare-request-row .homecare-status-label{max-width:115px;white-space:normal;text-align:right}}
+
+.homecare-live-content .homecare-detail-card{min-width:0;border:0;border-radius:12px;box-shadow:0 4px 2px rgba(0,0,0,.25);color:#104136;font-family:Inter,sans-serif}
+.homecare-live-content .homecare-detail-heading{min-height:56px;padding:16px 20px;background:rgba(31,132,109,.7);border-bottom:1px solid #e3eaf1;flex-wrap:wrap;align-items:center}
+.homecare-live-content .homecare-detail-heading h2{font:600 16px/24px Inter,sans-serif;margin:0}
+.homecare-live-content .homecare-detail-heading .homecare-status-label{display:inline-flex;align-items:center;min-height:24px;padding:3px 10px;background:#fcf3e1;color:#855304;font:600 12px/18px Inter,sans-serif;white-space:normal}
+.homecare-live-content .homecare-detail-heading .accepted{background:#dff5f0;color:#14725f}
+.homecare-live-content .homecare-detail-heading .rejected{background:#ffebeb;color:#b93e46}
+.homecare-live-content .homecare-detail-heading .cancelled,.homecare-live-content .homecare-detail-heading .draft{background:#eef2f7;color:#52647c}
+.homecare-live-content .homecare-detail-content{display:grid;gap:16px;padding:20px;min-width:0;overflow-wrap:anywhere}
+.homecare-live-content .homecare-detail-facts{display:grid;gap:18px}
+.homecare-live-content .homecare-detail-item{gap:2px;margin:0;min-width:0}
+.homecare-live-content .homecare-detail-item small{font:500 12px/18px Inter,sans-serif;color:#1f846d}
+.homecare-live-content .homecare-detail-item strong{font:500 14px/21px Inter,sans-serif;color:#104136}
+.homecare-live-content .request-timeline{padding:16px 0 0;margin:0;border-top:1px solid #e3eaf1;list-style:none}
+.homecare-live-content .request-timeline li{gap:14px;min-height:0;padding-bottom:20px}
+.homecare-live-content .request-timeline li:last-child{padding-bottom:0}
+.homecare-live-content .request-timeline li:not(:last-child):before{left:11px;top:26px;bottom:2px;width:2px;background:#e3eaf1}
+.homecare-live-content .request-timeline li>span{box-sizing:border-box;display:grid;place-items:center;width:24px;height:24px;border-color:#c9d5e2}
+.homecare-live-content .request-timeline li.complete>span{background:#17784f;border-color:#17784f;color:white}
+.homecare-live-content .request-timeline li.current>span{border-color:#1f846d}
+.homecare-live-content .request-timeline li>div{min-width:0;gap:1px}
+.homecare-live-content .request-timeline strong{font:600 14px/21px Inter,sans-serif;color:#104136}
+.homecare-live-content .request-timeline small{font:400 13px/19.5px Inter,sans-serif;color:#1f846d}
+.homecare-live-content .request-timeline .booking-event-reason{color:#104136;white-space:pre-wrap}
+.homecare-live-content .homecare-notice{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;margin:0;background:#c3eee4;border:1px solid #c3eee4;border-radius:10px;font:400 13px/19.5px Inter,sans-serif}
+.homecare-live-content .homecare-notice svg{flex-shrink:0;margin-top:1px}
+.homecare-live-content details.homecare-booking-disclosure{margin:0;border-top:1px solid #e3eaf1;padding-top:12px;font-size:13px;line-height:1.5;min-width:0}
+.homecare-live-content .homecare-booking-disclosure summary{color:#1f846d;font-size:13px;font-weight:600}
+.homecare-live-content .homecare-booking-disclosure[open]>.homecare-detail-item{margin-top:12px}
+.homecare-live-content .homecare-booking-disclosure .homecare-cancel-form{margin-top:12px;padding-top:0;border:0}
+.homecare-live-content .homecare-audit-history{display:grid;gap:12px;padding-left:18px;margin:14px 0 0}
+.homecare-live-content .homecare-audit-history li>strong,.homecare-live-content .homecare-audit-history li>small{display:block}
+.homecare-live-content .homecare-audit-history small{font-size:12px;color:#1f846d}
+.homecare-live-content .homecare-audit-history p{margin:3px 0;white-space:pre-wrap}
+.homecare-live-content .homecare-request-row>span{min-width:0}
+.homecare-live-content .homecare-request-row .homecare-booking-id{font-size:11px;color:#647d75;overflow-wrap:anywhere}
+@media(max-width:410px){.homecare-live-content .homecare-request-row{gap:8px}.homecare-live-content .homecare-request-row .homecare-status-label{flex:0 0 82px;font-size:11px}.homecare-live-content .homecare-detail-heading{gap:8px}.homecare-live-content .homecare-detail-heading .homecare-status-label{max-width:100%}}

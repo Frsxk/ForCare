@@ -1,0 +1,106 @@
+.account-popover {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+.account-popover > button.account-popover-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+.account-popover > button.account-popover-trigger.patient-account-profile { gap: 12px; }
+.account-popover > .account-popover-trigger:focus-visible {
+  outline: 3px solid #178a73;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.account-popover .account-popover-panel {
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 60;
+  top: 100%;
+  right: 0;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #d4e8e2;
+  border-radius: 12px;
+  background: #fff;
+  color: #104c3f;
+  box-shadow: 0 10px 30px #12382d26;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.account-popover .account-popover-panel[hidden] { display: none; }
+.account-popover .account-popover-identity {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0eee9;
+}
+.account-popover .account-popover-identity > span { color: #58766c; font-size: 12px; }
+.account-popover .account-popover-panel > a.account-popover-profile {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 0;
+  color: #127c65;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: normal;
+}
+.account-popover .account-popover-panel > a.account-popover-profile:hover { text-decoration: underline; }
+.account-popover .account-popover-panel .live-session-actions {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.account-popover .account-popover-panel .live-session-actions > button {
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #b9d4c8;
+  border-radius: 8px;
+  background: #fff;
+  color: #187a65;
+  font: inherit;
+  font-weight: 700;
+  white-space: normal;
+}
+.account-popover .account-popover-panel .live-session-actions > button:hover:not(:disabled) { background: #edf8f3; }
+.account-popover .account-popover-panel .live-session-actions > button:disabled { opacity: .6; cursor: wait; }
+.account-popover .account-popover-panel [role="alert"] { color: #943743; }
+.account-popover .account-popover-panel [role="alert"] p { margin: 0 0 6px; }
+.account-popover .account-popover-panel [role="alert"] button {
+  width: auto;
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #127c65;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  white-space: normal;
+}
+.account-popover .account-popover-panel a:focus-visible,
+.account-popover .account-popover-panel button:focus-visible { outline: 3px solid #178a73; outline-offset: 2px; }
