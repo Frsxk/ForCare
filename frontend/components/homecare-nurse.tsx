@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent, type RefObject } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore, Suspense, type FormEvent, type KeyboardEvent, type RefObject } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CalendarDays, Check, Search, X } from "lucide-react";
 import { NurseHeader } from "@/components/nurse-header";
 import { ReadError, ReadPanel } from "@/components/nurse-workspace-pages";
 import { useNurseWorkspace, useNurseRead } from "@/components/nurse-workspace-provider";
 import { asApiError, type ApiError } from "@/lib/api/client";
 import {
-  prepareAvailabilityWrite,
   prepareNurseBookingCancellation,
   prepareNurseBookingDecision,
   prepareNurseBookingReschedule,
   preparePriorityRequestReview,
-  type Availability,
-  type AvailabilityInput,
   type AvailabilitySlots,
   type BookingStatus,
   type HomecareBooking,
@@ -354,6 +352,22 @@ export async function readNurseRequest(homecare: Pick<HomecareApi, "booking" | "
   return request;
 }
 export function LiveHomecareNurseRequestDetail({ requestId, priorityId = null }: { requestId: string; priorityId?: string | null }) {
+  // The review page is prerendered, so the ?prioritas= query is read on the client
+  // inside a Suspense boundary instead of via server searchParams.
+  if (priorityId === null) {
+    return <Suspense fallback={<NurseRequestDetailShell />}>
+      <RequestDetailWithQuery requestId={requestId} />
+    </Suspense>;
+  }
+  return <NurseRequestDetailContent requestId={requestId} priorityId={priorityId} />;
+}
+function NurseRequestDetailShell() {
+  return <><NurseHeader activePage="requests" /><main id="konten-utama" className="dashboard-main homecare-detail-main homecare-nurse-main"><Link href="/pengajuan-homecare" className="back-to-requests"><ArrowLeft size={16} aria-hidden="true" />Kembali ke Pengajuan</Link><p className="homecare-nurse-notice" role="status">Memuat detail pengajuan…</p></main></>;
+}
+function RequestDetailWithQuery({ requestId }: { requestId: string }) {
+  return <NurseRequestDetailContent requestId={requestId} priorityId={useSearchParams().get("prioritas")} />;
+}
+function NurseRequestDetailContent({ requestId, priorityId }: { requestId: string; priorityId: string | null }) {
   const { homecare } = useNurseWorkspace();
   const loader = useCallback((signal: AbortSignal) => readNurseRequest(homecare, requestId, priorityId, signal), [homecare, requestId, priorityId]);
   const read = useNurseRead(loader);
@@ -365,7 +379,7 @@ export function LiveHomecareNurseRequestDetail({ requestId, priorityId = null }:
   </main></>;
 }
 
-const scheduleTabs = [{ value: "visits", label: "Mendatang" }, { value: "done", label: "Selesai" }, { value: "all", label: "Semua" }, { value: "availability", label: "Atur ketersediaan" }] as const;
+const scheduleTabs = [{ value: "visits", label: "Mendatang" }, { value: "done", label: "Selesai" }, { value: "all", label: "Semua" }] as const;
 type ScheduleTab = typeof scheduleTabs[number]["value"];
 function navigateTabs(event: KeyboardEvent<HTMLButtonElement>, index: number, select: (tab: ScheduleTab) => void, refs: RefObject<(HTMLButtonElement | null)[]>) {
   let next: number;
@@ -397,67 +411,10 @@ function VisitSchedule({ tab }: { tab: "visits" | "done" | "all" }) {
   const visits = useNurseRead(loader);
   return <ReadPanel state={visits.state} reload={visits.reload}>{data => <><NurseScheduleRows bookings={data.items} tab={tab} />{data.page.nextCursor && <NextPageButton label="Muat kunjungan berikutnya" onClick={() => loadFollowingPages(visits.resource, data, signal => readNurseVisitSchedule(homecare, signal, data.page.nextCursor))} />}</>}</ReadPanel>;
 }
-export function emptyAvailabilityDraft(): AvailabilityInput {
-  return { timeZone: "", slotMinutes: 0, bufferMinutes: 0, effectiveFrom: "", effectiveTo: "", windows: [], slots: [] };
-}
-export function availabilityDraft(current: Availability["current"]): AvailabilityInput {
-  return current ? { timeZone: current.timeZone, slotMinutes: current.slotMinutes, bufferMinutes: current.bufferMinutes, effectiveFrom: current.effectiveFrom, effectiveTo: current.effectiveTo, windows: current.windows.map(window => ({ ...window })), slots: current.slots.map(({ startsAt, endsAt }) => ({ startsAt, endsAt })) } : emptyAvailabilityDraft();
-}
-function AvailabilityEditor({ current, onPublished }: { current: Availability; onPublished: (result: Availability) => void }) {
-  const { homecareWrites } = useNurseWorkspace();
-  const [writer] = useState(() => homecareWrites.writer()), write = useSyncExternalStore(writer.subscribe, writer.getSnapshot, writer.getSnapshot);
-  const retained = write.status !== "idle" && write.operation.kind === "availability-put" ? JSON.parse(write.operation.intent.body) as AvailabilityInput & { expectedVersion: number } : null;
-  const [draft, setDraft] = useState<AvailabilityInput>(() => retained ?? availabilityDraft(current.current));
-  const [windows, setWindows] = useState(() => JSON.stringify(draft.windows, null, 2)), [slots, setSlots] = useState(() => JSON.stringify(draft.slots, null, 2));
-  const [error, setError] = useState<string | null>(null), [reviewing, setReviewing] = useState(write.status !== "idle"), [parsed, setParsed] = useState<AvailabilityInput | null>(null);
-  const locked = write.status === "sending" || write.status === "uncertain";
-  function parse() {
-    const windowsValue = JSON.parse(windows) as unknown, slotsValue = JSON.parse(slots) as unknown;
-    const input: AvailabilityInput = { timeZone: draft.timeZone, slotMinutes: draft.slotMinutes, bufferMinutes: draft.bufferMinutes, effectiveFrom: draft.effectiveFrom.trim() ? new Date(draft.effectiveFrom).toISOString() : "", effectiveTo: draft.effectiveTo.trim() ? new Date(draft.effectiveTo).toISOString() : "", windows: windowsValue as AvailabilityInput["windows"], slots: slotsValue as AvailabilityInput["slots"] };
-    return input;
-  }
-  function review(event: FormEvent) {
-    event.preventDefault(); setError(null);
-    if (locked) return;
-    try { const input = parse(); writer.reset(); setParsed(input); setReviewing(true); }
-    catch { setError("Periksa JSON windows/slots, zona IANA, durasi, buffer, dan waktu UTC. Format waktu harus dapat dikonversi menjadi ISO UTC."); }
-  }
-  async function publish() {
-    if (!parsed || locked) return;
-    try {
-      const operation = prepareAvailabilityWrite(current, parsed); await safeWrite(writer, operation);
-      const result = freshResult<Availability>(writer); if (result) onPublished(result);
-    } catch { setError("Konfigurasi ditolak validasi klien. Periksa versi, zona IANA, panjang interval, windows, dan maksimal 200 slot."); }
-  }
-  return <><div className="homecare-nurse-help"><p>Versi server saat ini: {current.version}. Versi dan slot bersifat immutable; publikasi selalu membuat versi baru setelah tinjauan.</p><p>Tidak ada jam kerja, zona waktu, durasi, buffer, atau slot produksi bawaan. Slot harus UTC eksplisit dan merupakan bagian dari window sesuai aturan server.</p></div>
-    {current.current && <details className="homecare-nurse-current-version"><summary>Konfigurasi server versi {current.version}</summary><StaticFields entries={[["Zona waktu", current.current.timeZone], ["Durasi slot", `${current.current.slotMinutes} menit`], ["Buffer sesudah slot", `${current.current.bufferMinutes} menit`], ["Berlaku (UTC)", `${formatTime(current.current.effectiveFrom)} — ${formatTime(current.current.effectiveTo)}`], ["Jumlah windows", String(current.current.windows.length)], ["Jumlah slot", String(current.current.slots.length)]]} /></details>}
-    <form className="homecare-nurse-form" onSubmit={review}><div className="homecare-nurse-settings-grid">
-      <label>Zona waktu IANA<input required maxLength={100} disabled={locked} value={draft.timeZone} placeholder="Contoh format: Asia/Jakarta" onChange={event => { setDraft({ ...draft, timeZone: event.target.value }); setReviewing(false); }} /></label>
-      <label>Durasi slot (menit)<input required type="number" min={1} max={480} disabled={locked} value={draft.slotMinutes || ""} onChange={event => { setDraft({ ...draft, slotMinutes: Number(event.target.value) }); setReviewing(false); }} /></label>
-      <label>Buffer setelah slot (menit)<input required type="number" min={0} max={120} disabled={locked} value={Number.isFinite(draft.bufferMinutes) ? draft.bufferMinutes : ""} onChange={event => { setDraft({ ...draft, bufferMinutes: Number(event.target.value) }); setReviewing(false); }} /></label>
-      <label>Berlaku dari (UTC)<input required type="datetime-local" step={1} disabled={locked} value={draft.effectiveFrom} onChange={event => { setDraft({ ...draft, effectiveFrom: event.target.value }); setReviewing(false); }} /></label>
-      <label>Berlaku sampai (UTC)<input required type="datetime-local" step={1} disabled={locked} value={draft.effectiveTo} onChange={event => { setDraft({ ...draft, effectiveTo: event.target.value }); setReviewing(false); }} /></label>
-    </div><label>Windows kerja (JSON)<textarea className="homecare-nurse-json" required rows={7} spellCheck={false} disabled={locked} value={windows} onChange={event => { setWindows(event.target.value); setReviewing(false); }} aria-describedby="availability-windows-help" /></label><small id="availability-windows-help">Array maksimum format {`[{"weekday":1,"startMinute":540,"endMinute":1020}]`}; weekday 1=Senin sampai 7=Minggu. Array kosong [] diperbolehkan bila memang belum ada jam kerja.</small>
-      <label>Slot UTC eksplisit (JSON)<textarea className="homecare-nurse-json" required rows={10} spellCheck={false} disabled={locked} value={slots} onChange={event => { setSlots(event.target.value); setReviewing(false); }} aria-describedby="availability-slots-help" /></label><small id="availability-slots-help">Maksimal 200 objek {`{"startsAt":"YYYY-MM-DDTHH:mm:ss.SSSZ","endsAt":"YYYY-MM-DDTHH:mm:ss.SSSZ"}`}. Sistem tidak membuat slot otomatis atau menebak konversi zona/DST.</small>
-      {error && <p role="alert">{error}</p>}<button className="button button-outline" disabled={locked} type="submit">Tinjau konfigurasi baru</button>
-    </form>
-    {reviewing && <section className="homecare-nurse-review" aria-labelledby="availability-review-title"><h3 id="availability-review-title">Tinjau sebelum publikasi</h3>{parsed ? <><StaticFields entries={[["Zona", parsed.timeZone], ["Durasi / buffer", `${parsed.slotMinutes} / ${parsed.bufferMinutes} menit`], ["Efektif", `${parsed.effectiveFrom} — ${parsed.effectiveTo}`], ["Windows / slot", `${parsed.windows.length} / ${parsed.slots.length}`]]} /><button type="button" className="button button-primary" disabled={locked} onClick={() => void publish()}>Publikasikan versi setelah {current.version}</button></> : <p>Tinjau isian tersimpan dari tindakan sebelumnya. Hasil tetap harus diverifikasi server.</p>}</section>}
-    <HomecareWriteFeedback writer={writer} />
-  </>;
-}
-function AvailabilityPanel() {
-  const { homecare } = useNurseWorkspace();
-  const loader = useCallback((signal: AbortSignal) => homecare.availability(signal), [homecare]);
-  const current = useNurseRead(loader);
-  const [published, setPublished] = useState<Availability | null>(null);
-  return <section className="card live-card" aria-labelledby="availability-editor-title"><div className="homecare-nurse-section-heading"><div><h2 id="availability-editor-title">Ketersediaan saya</h2><p>Konfigurasi penuh berdasarkan versi terakhir dari server.</p></div><button type="button" className="button button-outline" onClick={() => { setPublished(null); void current.reload(); }}>Muat ulang versi</button></div>
-    {published ? <AvailabilityEditor key={published.version} current={published} onPublished={setPublished} /> : <ReadPanel state={current.state} reload={current.reload}>{data => <AvailabilityEditor key={`${data.nurseId}-${data.version}`} current={data} onPublished={setPublished} />}</ReadPanel>}
-  </section>;
-}
 export function LiveHomecareNurseSchedule() {
   const [tab, setTab] = useState<ScheduleTab>("visits"), refs = useRef<(HTMLButtonElement | null)[]>([]);
   return <><NurseHeader activePage="visits" /><main id="konten-utama" className="dashboard-main visit-schedule-main homecare-nurse-main"><div className="page-heading"><h1>Jadwal Kunjungan</h1><p>Kunjungan yang akan dan sudah Anda lakukan</p></div>
     <div className="visit-tabs" role="tablist" aria-label="Jadwal dan ketersediaan">{scheduleTabs.map((item, index) => <button key={item.value} ref={element => { refs.current[index] = element; }} role="tab" id={`schedule-tab-${item.value}`} aria-selected={tab === item.value} aria-controls={`schedule-panel-${item.value}`} tabIndex={tab === item.value ? 0 : -1} className={`visit-tab${tab === item.value ? " is-selected" : ""}`} onClick={() => setTab(item.value)} onKeyDown={event => navigateTabs(event, index, setTab, refs)}>{item.label}</button>)}</div>
-    <div className="schedule-groups" role="tabpanel" id={`schedule-panel-${tab}`} aria-labelledby={`schedule-tab-${tab}`} tabIndex={0}>{tab === "availability" ? <AvailabilityPanel /> : <VisitSchedule tab={tab} />}</div>
+    <div className="schedule-groups" role="tabpanel" id={`schedule-panel-${tab}`} aria-labelledby={`schedule-tab-${tab}`} tabIndex={0}><VisitSchedule tab={tab} /></div>
   </main></>;
 }
