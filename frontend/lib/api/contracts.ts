@@ -7,7 +7,7 @@ export type LoginInput = { email: string; password: string };
 export type RegistrationInput = {
   fullName: string;
   birthDate: string;
-  gender: "male" | "female" | "other" | "undisclosed";
+  gender: "male" | "female";
   email: string;
   phone: string;
   password: string;

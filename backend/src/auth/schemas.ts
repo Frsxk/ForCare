@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const genderSchema = z.enum(["male", "female", "other", "undisclosed"]);
+export const genderSchema = z.enum(["male", "female"]);
 
 function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;

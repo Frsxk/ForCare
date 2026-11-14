@@ -129,6 +129,29 @@ integration("identity and session integration", () => {
     expect(((await invalidDate.json()) as any).error.code).toBe("VALIDATION_FAILED");
   }, 30_000);
 
+  test("registration rejects unsupported genders without creating identities", async () => {
+    const { app } = createTestApp(db.sql, { ip: "100.0.0.15" });
+    for (const gender of ["other", "undisclosed"]) {
+      const email = `restricted-gender-${gender}@example.com`;
+      const response = await register(app, email, { gender });
+      expect(response.status).toBe(422);
+      expect(((await response.json()) as any).error.code).toBe("VALIDATION_FAILED");
+    }
+    const identities = (await db.sql`
+      SELECT count(DISTINCT a.id)::int AS accounts,
+             count(DISTINCT p.id)::int AS patients,
+             count(DISTINCT s.id)::int AS sessions
+      FROM public.accounts a
+      LEFT JOIN public.patients p ON p.account_id = a.id
+      LEFT JOIN public.sessions s ON s.account_id = a.id
+      WHERE a.email_normalized IN (
+        'restricted-gender-other@example.com',
+        'restricted-gender-undisclosed@example.com'
+      )
+    `) as unknown as Array<{ accounts: number; patients: number; sessions: number }>;
+    expect(identities).toEqual([{ accounts: 0, patients: 0, sessions: 0 }]);
+  }, 30_000);
+
   test("login failures are indistinguishable and disabled/staff-revoked accounts revalidate", async () => {
     const { app } = createTestApp(db.sql, { ip: "100.0.0.3" });
     await register(app, "generic-login@example.com");

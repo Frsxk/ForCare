@@ -15,7 +15,7 @@ const account = { id: "synthetic-patient", email: "synthetic@example.invalid", s
 const session = { csrfToken: "synthetic-csrf", expiresAt: "2026-11-15T00:00:00.000Z" };
 const registration = { account, patientProfile: { id: "synthetic-profile", fullName: "Synthetic Patient", recordNumber: null }, session };
 const sessionData = { account, session, access: { scopes: ["patient:self"], accessContexts: [] }, displayTimeZone: "Asia/Jakarta", expiresAt: session.expiresAt, capabilities: {} };
-const input = { fullName: "Synthetic Patient", birthDate: "2000-01-01", gender: "undisclosed", email: account.email, phone: "+620000", password: "synthetic-only-password" };
+const input = { fullName: "Synthetic Patient", birthDate: "2000-01-01", gender: "female", email: account.email, phone: "+620000", password: "synthetic-only-password" };
 const ok = (data, status = 200) => new Response(JSON.stringify({ data, requestId }), { status });
 const failed = (status, code) => new Response(JSON.stringify({ error: { code, requestId } }), { status });
 const source = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -80,13 +80,25 @@ test("a definitive registration validation failure allows a corrected explicit s
   assert.equal(calls, 2);
 });
 
+test("registration exposes and submits only female or male gender values", () => {
+  const forms = source("../components/auth-pages.tsx");
+  const select = forms.match(/<select id="register-gender"[\s\S]*?<\/select>/)?.[0];
+  assert.ok(select, "registration gender select is present");
+  const values = [...select.matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]).filter(Boolean);
+  assert.deepEqual(values, ["female", "male"]);
+  assert.match(select, />Perempuan</);
+  assert.match(select, />Laki-laki</);
+  assert.match(forms, /gender !== "male" && gender !== "female"\) return/);
+  assert.match(source("../lib/api/contracts.ts"), /gender: "male" \| "female";/);
+});
+
 test("auth routes preserve teammate visual system without mock handlers, role selection or wrong asset paths", () => {
   const forms = source("../components/auth-pages.tsx");
   assert.match(forms, /auth-layout/);
   assert.match(forms, /controller\.login\(/);
   assert.match(forms, /controller\.register\(/);
   assert.match(forms, /name="fullName"/);
-  for (const gender of ["male", "female", "other", "undisclosed"]) assert.ok(forms.includes(`value="${gender}"`));
+  for (const gender of ["female", "male"]) assert.ok(forms.includes(`value="${gender}"`));
   assert.match(forms, /auth-brand-wordmark/);
   assert.match(source("../components/auth-brand-wordmark.tsx"), /auth-brand-wordmark-for/);
   assert.match(source("../components/auth-brand-wordmark.tsx"), /auth-brand-wordmark-care/);

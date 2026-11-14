@@ -24,14 +24,14 @@ JSON request bodies are limited to 32 KiB. The application returns 413 `PAYLOAD_
 {
   "fullName": "Synthetic Patient",
   "birthDate": "1990-03-12",
-  "gender": "undisclosed",
+  "gender": "female",
   "email": "patient@example.invalid",
   "phone": "+628000000001",
   "password": "<locally chosen password>"
 }
 ```
 
-All fields are required. `gender` is `male|female|other|undisclosed`; `birthDate` must be a real, non-future calendar date. Password length is 8–128 characters. Email is trimmed and lowercased. The account, patient profile and session are created in one transaction. A duplicate email returns generic 409 `REGISTRATION_UNAVAILABLE`, whether the existing account is a patient or nurse.
+All fields are required. `gender` is `male|female`; `birthDate` must be a real, non-future calendar date. Password length is 8–128 characters. Email is trimmed and lowercased. The account, patient profile and session are created in one transaction. A duplicate email returns generic 409 `REGISTRATION_UNAVAILABLE`, whether the existing account is a patient or nurse.
 
 The 201 response has this shape; angle-bracket values below describe server-generated values, not literal request data:
 

@@ -33,7 +33,7 @@ function registration(overrides: Record<string, unknown> = {}) {
   return {
     fullName: "Synthetic Patient",
     birthDate: "1990-03-12",
-    gender: "undisclosed",
+    gender: "female",
     email: "person@example.com",
     phone: "+6281234567890",
     password: "min8chars",
@@ -64,6 +64,17 @@ async function appErrorAsync(run: () => Promise<unknown>): Promise<AppError> {
 describe("registration contract", () => {
   test("accepts exactly the approved patient fields", () => {
     expect(parseStrict(registrationSchema, registration()).email).toBe("person@example.com");
+  });
+
+  test("accepts only female or male as the registration gender", () => {
+    for (const gender of ["female", "male"] as const) {
+      expect(parseStrict(registrationSchema, registration({ gender })).gender).toBe(gender);
+    }
+    for (const gender of ["other", "undisclosed", "", null, 1]) {
+      expect(appError(() => parseStrict(registrationSchema, registration({ gender }))).code).toBe(
+        "VALIDATION_FAILED",
+      );
+    }
   });
 
   test("rejects a role selector as an unknown field", () => {

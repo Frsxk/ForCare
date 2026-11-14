@@ -83,7 +83,7 @@ export function RegisterPage() {
     const form = event.currentTarget;
     const fields = new FormData(form);
     const gender = fields.get("gender");
-    if (gender !== "male" && gender !== "female" && gender !== "other" && gender !== "undisclosed") return;
+    if (gender !== "male" && gender !== "female") return;
     const input: RegistrationInput = {
       fullName: String(fields.get("fullName") ?? ""), birthDate: String(fields.get("birthDate") ?? ""), gender,
       email: String(fields.get("email") ?? ""), phone: String(fields.get("phone") ?? ""), password: String(fields.get("password") ?? ""),
@@ -109,7 +109,7 @@ export function RegisterPage() {
   const disabled = pending || uncertain;
   return <AuthShell><div className="auth-form-wrap register-wrap"><header className="auth-heading"><h1>Buat akun ForCare</h1><p id="register-help">Lengkapi data Anda untuk mendaftar sebagai pasien.</p></header><form ref={formRef} className="auth-form register-form" onSubmit={submit} aria-busy={pending} aria-describedby={error || uncertain ? "register-help register-error" : "register-help"}>
     <label className="auth-full" htmlFor="register-name">Nama lengkap<input id="register-name" name="fullName" autoComplete="name" maxLength={200} placeholder="Nama sesuai identitas" required disabled={disabled}/></label>
-    <div className="auth-fields-row"><label htmlFor="register-birthdate">Tanggal lahir<input id="register-birthdate" type="date" name="birthDate" autoComplete="bday" required disabled={disabled}/></label><label htmlFor="register-gender">Jenis kelamin<select id="register-gender" name="gender" defaultValue="" required disabled={disabled}><option value="" disabled>Pilih</option><option value="female">Perempuan</option><option value="male">Laki-laki</option><option value="other">Lainnya</option><option value="undisclosed">Tidak ingin menyebutkan</option></select></label></div>
+    <div className="auth-fields-row"><label htmlFor="register-birthdate">Tanggal lahir<input id="register-birthdate" type="date" name="birthDate" autoComplete="bday" required disabled={disabled}/></label><label htmlFor="register-gender">Jenis kelamin<select id="register-gender" name="gender" defaultValue="" required disabled={disabled}><option value="" disabled>Pilih</option><option value="female">Perempuan</option><option value="male">Laki-laki</option></select></label></div>
     <label className="auth-full" htmlFor="register-email">Email<input id="register-email" type="email" name="email" autoComplete="email" maxLength={254} placeholder="nama@email.com" required disabled={disabled}/></label>
     <label className="auth-full" htmlFor="register-phone">Nomor telepon<input id="register-phone" type="tel" name="phone" autoComplete="tel" minLength={3} maxLength={32} placeholder="0812-0000-0000" required disabled={disabled}/></label>
     <label className="auth-full" htmlFor="register-password">Kata sandi<input id="register-password" type="password" name="password" autoComplete="new-password" minLength={8} maxLength={128} placeholder="Minimal 8 karakter" required disabled={disabled}/></label>
