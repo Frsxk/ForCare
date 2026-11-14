@@ -13,6 +13,7 @@ import { Avatar } from "@/components/patient-identity";
 import { SessionActions } from "@/components/session-actions";
 export { SnapshotView } from "@/components/medical-snapshot-panel";
 import { createNurseApi, type NurseProfile, type PatientList } from "@/lib/api/nurse";
+import type { HomecareBooking, Page } from "@/lib/api/homecare";
 import "./patient-directory.css";
 import "./patient-record.css";
 import "./nurse-profile.css";
@@ -57,24 +58,60 @@ export function PatientRows({ patients }: { patients: PatientList["items"] }) {
     </tr>)}</tbody>
   </table>{patients.length === 0 && <div className="empty-state"><Search size={30} aria-hidden="true" /><h2>Belum ada pasien pada daftar ini</h2><p>Hanya pasien yang sedang ditugaskan kepada akun Anda yang ditampilkan.</p></div>}</div>;
 }
-export function NurseDashboardView({ list }: { list: PatientList }) {
-  const stats = [{ label: "Pasien penugasan aktif", value: `${list.items.length} pasien dimuat`, icon: UsersRound, tone: "cream" }, { label: "Pengajuan menunggu", value: "Belum tersedia", icon: ClipboardClock, tone: "blue" }, { label: "Kunjungan hari ini", value: "Belum tersedia", icon: CalendarCheck, tone: "cream" }, { label: "Selesai hari ini", value: "Belum tersedia", icon: CheckCircle2, tone: "blue" }];
+const dashboardFallbackIdentity = "Identitas di luar izin akses saat ini tidak ditampilkan.";
+function dashboardPatient(booking: HomecareBooking) {
+  return booking.profileSnapshot?.fullName ?? dashboardFallbackIdentity;
+}
+function dashboardUtcTime(value: string) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(value)) + " UTC";
+}
+function DashboardVisitRow({ booking }: { booking: HomecareBooking }) {
+  return <li className="schedule-page-row"><div className="schedule-page-patient"><strong>{dashboardUtcTime(booking.startsAt)}</strong><span className="secondary-text">{dashboardPatient(booking)} · {booking.profileSnapshot?.recordNumber ?? "Nomor RM di luar izin akses"}</span></div><span className="schedule-status schedule-status-scheduled">Diterima</span><Link className="button button-primary button-small schedule-row-action" href={`/pengajuan-homecare/${booking.id}`} aria-label={`Buka kunjungan ${dashboardPatient(booking)}`}>Buka kunjungan</Link></li>;
+}
+export function NurseDashboardView({ list, pending = null, today = null, upcoming = null }: { list: PatientList; pending?: Page<HomecareBooking> | null; today?: HomecareBooking[] | null; upcoming?: HomecareBooking[] | null }) {
+  const loaded = pending !== null && today !== null && upcoming !== null;
+  const pendingCount = pending ? `${pending.items.length}${pending.page.hasMore ? "+" : ""}` : "Memuat…";
+  const stats = [{ label: "Pasien penugasan aktif", value: `${list.items.length} pasien dimuat`, icon: UsersRound, tone: "cream" }, { label: "Pengajuan menunggu", value: pendingCount, icon: ClipboardClock, tone: "blue" }, { label: "Kunjungan hari ini", value: today ? `${today.length}` : "Memuat…", icon: CalendarCheck, tone: "cream" }, { label: "Kunjungan mendatang", value: upcoming ? `${upcoming.length}` : "Memuat…", icon: CheckCircle2, tone: "blue" }];
+  const latestRequests = pending?.items.slice(0, 3) ?? [];
+  const nearest = upcoming?.[0] ?? null;
   return <>
-    <section className="stats" aria-label="Ringkasan aktivitas perawat">{stats.map(({ label, value, icon: Icon, tone }) => <div className="stat" key={label}><span className={`stat-icon stat-icon-${tone}`}><Icon size={25} strokeWidth={1.9} aria-hidden="true" /></span><div><p className="stat-label">{label}</p><p className={`stat-value${typeof value === "string" && value === "Belum tersedia" ? " nurse-unavailable-value" : ""}`}>{value}</p></div></div>)}</section>
+    <section className="stats" aria-label="Ringkasan aktivitas perawat">{stats.map(({ label, value, icon: Icon, tone }) => <div className="stat" key={label}><span className={`stat-icon stat-icon-${tone}`}><Icon size={25} strokeWidth={1.9} aria-hidden="true" /></span><div><p className="stat-label">{label}</p><p className={`stat-value${value === "Memuat…" ? " nurse-unavailable-value" : ""}`}>{value}</p></div></div>)}</section>
     {list.page.hasMore && <p className="sr-only">Masih ada halaman berikutnya; jumlah dimuat bukan total seluruh pasien.</p>}
-    <section className="card attention-card" aria-labelledby="attention-title"><div className="section-header attention-header"><h2 id="attention-title">Perlu perhatian</h2><span className="ai-badge">Penilaian belum tersedia</span></div><div className="attention-table-wrap" role="region" aria-label="Pasien yang perlu perhatian" tabIndex={0}><table className="attention-table"><colgroup>{["patient", "risk", "reason", "source", "action"].map(column => <col key={column} className={`col-${column}`} />)}</colgroup><thead><tr><th scope="col">Pasien</th><th scope="col">Tingkat risiko</th><th scope="col">Faktor utama</th><th scope="col">Sumber data</th><th scope="col"><span className="sr-only">Tindakan</span></th></tr></thead><tbody><tr><td colSpan={5}><p className="patient-empty">Penilaian risiko klinis belum tersedia. Daftar penugasan bukan daftar pasien berisiko.</p></td></tr></tbody></table></div></section>
+    <section className="card attention-card" aria-labelledby="attention-title"><div className="section-header attention-header"><h2 id="attention-title">Perlu perhatian</h2><span className="ai-badge">Penilaian belum tersedia</span></div><div className="attention-table-wrap" role="region" aria-label="Pasien yang perlu perhatian" tabIndex={0}><table className="attention-table"><colgroup>{["patient", "risk", "reason", "source", "action"].map(column => <col key={column} className={`col-${column}`} />)}</colgroup><thead><tr><th scope="col">Pasien</th><th scope="col">Tingkat risiko</th><th scope="col">Faktor utama</th><th scope="col">Sumber data</th><th scope="col"><span className="sr-only">Tindakan</span></th></tr></thead><tbody><tr><td colSpan={5}><p className="patient-empty">Penilaian risiko klinis belum tersedia pada layanan ini. Daftar penugasan bukan daftar pasien berisiko.</p></td></tr></tbody></table></div></section>
     <div className="dashboard-grid">
-      <section className="card requests-card" id="pengajuan" aria-labelledby="requests-title"><div className="section-header teal-header"><h2 id="requests-title">Pengajuan terbaru</h2><Link href="/pengajuan-homecare" className="button button-white button-small">Lihat semua</Link></div><ul className="request-list"><li className="patient-empty">Ringkasan pengajuan belum tersedia. Buka pengajuan untuk membaca data server.</li></ul></section>
-      <section className="card visits-card" aria-labelledby="visits-title"><div className="section-header teal-header"><h2 id="visits-title">Kunjungan hari ini</h2></div><ul className="visit-list"><li className="patient-empty">Ringkasan kunjungan belum tersedia. <Link className="text-button" href="/jadwal-kunjungan">Buka jadwal</Link></li></ul></section>
-      <section className="card upcoming-card" id="jadwal" aria-labelledby="upcoming-title"><div className="section-header mint-header"><h2 id="upcoming-title">Jadwal terdekat</h2></div><ul className="upcoming-list"><li className="upcoming-row"><span className="calendar-icon"><CalendarDays size={19} aria-hidden="true" /></span><div><strong>Belum tersedia</strong><span className="secondary-text">Lihat kunjungan yang dikonfirmasi pada jadwal.</span></div></li></ul></section>
+      <section className="card requests-card" id="pengajuan" aria-labelledby="requests-title"><div className="section-header teal-header"><h2 id="requests-title">Pengajuan terbaru</h2><Link href="/pengajuan-homecare" className="button button-white button-small">Lihat semua</Link></div>
+        {loaded && !latestRequests.length ? <ul className="request-list"><li className="patient-empty">Tidak ada pengajuan yang menunggu keputusan Anda.</li></ul> : !loaded ? <ul className="request-list"><li className="patient-empty">Memuat pengajuan dari server…</li></ul> : <ul className="homecare-nurse-schedule-list">{latestRequests.map(booking => <li className="schedule-page-row" key={booking.id}><div className="schedule-page-patient"><strong>{dashboardPatient(booking)}</strong><span className="secondary-text">{dashboardUtcTime(booking.startsAt)} · {booking.profileSnapshot?.recordNumber ?? "Nomor RM di luar izin akses"}</span></div><span className="request-status request-status-pending">Menunggu keputusan</span><Link className="button button-primary button-small schedule-row-action" href={`/pengajuan-homecare/${booking.id}`} aria-label={`Tinjau pengajuan ${dashboardPatient(booking)}`}>Tinjau</Link></li>)}</ul>}
+      </section>
+      <section className="card visits-card" aria-labelledby="visits-title"><div className="section-header teal-header"><h2 id="visits-title">Kunjungan hari ini</h2></div>
+        {!today ? <ul className="visit-list"><li className="patient-empty">Memuat jadwal dari server…</li></ul> : today.length ? <ul className="homecare-nurse-schedule-list">{today.map(booking => <DashboardVisitRow key={booking.id} booking={booking} />)}</ul> : <ul className="visit-list"><li className="patient-empty">Tidak ada kunjungan terjadwal hari ini (UTC). <Link className="text-button" href="/jadwal-kunjungan">Buka jadwal</Link></li></ul>}
+      </section>
+      <section className="card upcoming-card" id="jadwal" aria-labelledby="upcoming-title"><div className="section-header mint-header"><h2 id="upcoming-title">Jadwal terdekat</h2></div>
+        {!upcoming ? <ul className="upcoming-list"><li className="upcoming-row"><span className="calendar-icon"><CalendarDays size={19} aria-hidden="true" /></span><div><strong>Memuat jadwal dari server…</strong><span className="secondary-text">Hanya kunjungan yang sudah diterima yang ditampilkan.</span></div></li></ul> : nearest ? <ul className="upcoming-list"><li className="upcoming-row"><span className="calendar-icon"><CalendarDays size={19} aria-hidden="true" /></span><div><strong>{dashboardUtcTime(nearest.startsAt)}</strong><span className="secondary-text">{dashboardPatient(nearest)} · {nearest.profileSnapshot?.recordNumber ?? "Nomor RM di luar izin akses"}</span></div><Link className="text-button" href="/jadwal-kunjungan">Buka jadwal</Link></li></ul> : <ul className="upcoming-list"><li className="upcoming-row"><span className="calendar-icon"><CalendarDays size={19} aria-hidden="true" /></span><div><strong>Belum ada kunjungan mendatang</strong><span className="secondary-text">Lihat kunjungan yang diterima pada jadwal.</span></div></li></ul>}
+      </section>
     </div>
   </>;
 }
 export function LiveNurseDashboard() {
-  const { api } = useNurseWorkspace(); const profile = useNurseProfile();
+  const { api, homecare } = useNurseWorkspace(); const profile = useNurseProfile();
   const loader = useCallback((signal: AbortSignal) => api.patients({}, signal), [api]);
   const list = useNurseRead(loader);
-  return <><NurseHeader activePage="dashboard" /><main id="konten-utama" className="dashboard-main"><section className="welcome" id="beranda" aria-labelledby="welcome-title"><div><h1 id="welcome-title">Selamat datang{profile.status === "ready" ? `, ${profile.data.displayName}` : ""}</h1><p>Ruang kerja perawat · penugasan aktif</p></div><Link className="button button-primary welcome-action" href="/pengajuan-homecare">Tinjau pengajuan</Link></section><ReadPanel state={list.state} reload={list.reload}>{data => <NurseDashboardView list={data} />}</ReadPanel></main></>;
+  const pendingLoader = useCallback((signal: AbortSignal) => homecare.bookings({ status: "submitted" }, signal), [homecare]);
+  const pending = useNurseRead(pendingLoader);
+  const scheduleLoader = useCallback((signal: AbortSignal) => {
+    const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+    return homecare.schedule({ from: start.toISOString(), to: new Date(start.getTime() + 31 * 24 * 60 * 60_000).toISOString() }, signal);
+  }, [homecare]);
+  const schedule = useNurseRead(scheduleLoader);
+  const todayKey = new Date().toISOString().slice(0, 10), now = Date.now();
+  const accepted = schedule.state.status === "ready" ? schedule.state.data.items : null;
+  const today = accepted ? accepted.filter(booking => booking.startsAt.slice(0, 10) === todayKey) : null;
+  const upcoming = accepted ? accepted.filter(booking => Date.parse(booking.startsAt) > now && booking.startsAt.slice(0, 10) > todayKey) : null;
+  return <><NurseHeader activePage="dashboard" /><main id="konten-utama" className="dashboard-main"><section className="welcome" id="beranda" aria-labelledby="welcome-title"><div><h1 id="welcome-title">Selamat datang{profile.status === "ready" ? `, ${profile.data.displayName}` : ""}</h1><p>Ruang kerja perawat · penugasan aktif</p></div><Link className="button button-primary welcome-action" href="/pengajuan-homecare">Tinjau pengajuan</Link></section><ReadPanel state={list.state} reload={list.reload}>{data => <>
+    <NurseDashboardView list={data} pending={pending.state.status === "ready" ? pending.state.data : null} today={today} upcoming={upcoming} />
+    {pending.state.status === "error" && <ReadError error={pending.state.error} retry={pending.reload} />}
+    {schedule.state.status === "error" && <ReadError error={schedule.state.error} retry={schedule.reload} />}
+    {schedule.state.status === "ready" && schedule.state.data.page.nextCursor && <p className="patient-empty">Jadwal menampilkan halaman pertama (31 hari ke depan), bukan seluruh riwayat.</p>}
+  </>}</ReadPanel></main></>;
 }
 function DirectoryResults({ search }: { search: string }) {
   const { api } = useNurseWorkspace();
